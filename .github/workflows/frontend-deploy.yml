@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Source Code
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
@@ -25,10 +25,10 @@ jobs:
 
       - name: Sync Static Files to S3 Bucket
         run: |
-          # Fetch bucket name dynamically matching prefix
+          # Automatically query for the S3 bucket starting with tuition-app-frontend-
           BUCKET_NAME=$(aws s3api list-buckets --query "Buckets[?starts_with(Name, 'tuition-app-frontend-')].Name | [0]" --output text)
           if [ "$BUCKET_NAME" != "None" ] && [ -n "$BUCKET_NAME" ]; then
-            echo "Deploying to bucket: $BUCKET_NAME"
+            echo "Deploying frontend assets to: $BUCKET_NAME"
             aws s3 sync frontend/ s3://$BUCKET_NAME/ --delete
           else
             echo "Error: Target frontend S3 bucket not found. Run backend-deploy first."
