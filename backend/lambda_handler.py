@@ -18,7 +18,7 @@ class DecimalEncoder(json.JSONEncoder):
 
 # AWS DynamoDB Resource setup
 dynamodb = boto3.resource("dynamodb")
-TABLE_NAME = os.environ.get("TABLE_NAME", "tuition-app-table")
+TABLE_NAME = os.environ.get("TABLE_NAME", "krishna-tuition-table")
 table = dynamodb.Table(TABLE_NAME)
 
 

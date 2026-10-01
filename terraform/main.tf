@@ -18,13 +18,13 @@ provider "aws" {
 
 variable "aws_region" {
   type        = string
-  default     = "ap-south-1" # Default AWS Mumbai region
+  default     = "ap-south-1" # Mumbai
   description = "Target AWS deployment region"
 }
 
-# 1. DynamoDB Table
+# 1. DynamoDB Single Table
 resource "aws_dynamodb_table" "tuition_table" {
-  name         = "tuition-app-table"
+  name         = "krishna-tuition-table"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
 
@@ -34,17 +34,17 @@ resource "aws_dynamodb_table" "tuition_table" {
   }
 
   tags = {
-    Project = "tuition-platform"
+    Project = "krishna-tuitions"
   }
 }
 
-# 2. S3 Bucket for Static Frontend Web Hosting
+# 2. S3 Bucket for Static Web Hosting
 resource "aws_s3_bucket" "frontend_bucket" {
-  bucket_prefix = "tuition-app-frontend-"
+  bucket_prefix = "krishna-tuition-frontend-"
   force_destroy = true
 
   tags = {
-    Project = "tuition-platform"
+    Project = "krishna-tuitions"
   }
 }
 
@@ -57,8 +57,7 @@ resource "aws_s3_bucket_website_configuration" "frontend_hosting" {
 }
 
 resource "aws_s3_bucket_public_access_block" "public_access" {
-  bucket = aws_s3_bucket.frontend_bucket.id
-
+  bucket                  = aws_s3_bucket.frontend_bucket.id
   block_public_acls       = false
   block_public_policy     = false
   ignore_public_acls      = false
@@ -83,9 +82,87 @@ resource "aws_s3_bucket_policy" "frontend_policy" {
   })
 }
 
-# 3. IAM Role for Lambda Microservice
+# 3. AWS CloudFront Distribution (Edge Caching CDN - Free 1TB/mo)
+resource "aws_cloudfront_distribution" "s3_distribution" {
+  origin {
+    domain_name = aws_s3_bucket_website_configuration.frontend_hosting.website_endpoint
+    origin_id   = "S3-${aws_s3_bucket.frontend_bucket.id}"
+
+    custom_origin_config {
+      http_port              = 80
+      https_port             = 443
+      origin_protocol_policy = "http-only"
+      origin_ssl_protocols   = ["TLSv1.2"]
+    }
+  }
+
+  enabled             = true
+  is_ipv6_enabled     = true
+  default_root_object = "index.html"
+
+  default_cache_behavior {
+    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
+    cached_methods   = ["GET", "HEAD"]
+    target_origin_id = "S3-${aws_s3_bucket.frontend_bucket.id}"
+
+    forwarded_values {
+      query_string = false
+      cookies {
+        forward = "none"
+      }
+    }
+
+    viewer_protocol_policy = "redirect-to-https"
+    min_ttl                = 0
+    default_ttl            = 3600
+    max_ttl                = 86400
+  }
+
+  restrictions {
+    geo_restriction {
+      restriction_type = "none"
+    }
+  }
+
+  viewer_certificate {
+    cloudfront_default_certificate = true
+  }
+
+  tags = {
+    Project = "krishna-tuitions"
+  }
+}
+
+# 4. Amazon Cognito User Pool (Auth & Director Approval Gate - Free 50k MAUs)
+resource "aws_cognito_user_pool" "pool" {
+  name = "krishna-tuition-user-pool"
+
+  admin_create_user_config {
+    allow_admin_create_user_only = false
+  }
+
+  auto_verified_attributes = ["email"]
+
+  tags = {
+    Project = "krishna-tuitions"
+  }
+}
+
+resource "aws_cognito_user_pool_client" "client" {
+  name         = "krishna-tuition-client"
+  user_pool_id = aws_cognito_user_pool.pool.id
+
+  generate_secret = false
+  explicit_auth_flows = [
+    "ALLOW_USER_PASSWORD_AUTH",
+    "ALLOW_REFRESH_TOKEN_AUTH",
+    "ALLOW_USER_SRP_AUTH"
+  ]
+}
+
+# 5. IAM Role for Lambda
 resource "aws_iam_role" "lambda_exec_role" {
-  name = "tuition-app-lambda-role"
+  name = "krishna-tuition-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -102,8 +179,8 @@ resource "aws_iam_role" "lambda_exec_role" {
 }
 
 resource "aws_iam_policy" "lambda_policy" {
-  name        = "tuition-app-lambda-policy"
-  description = "Allows Lambda to write CloudWatch logs and access DynamoDB table"
+  name        = "krishna-tuition-lambda-policy"
+  description = "Allows Lambda access to DynamoDB, CloudWatch, and Bedrock"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -118,6 +195,13 @@ resource "aws_iam_policy" "lambda_policy" {
         ]
         Effect   = "Allow"
         Resource = aws_dynamodb_table.tuition_table.arn
+      },
+      {
+        Action = [
+          "bedrock:InvokeModel"
+        ]
+        Effect   = "Allow"
+        Resource = "*"
       },
       {
         Action = [
@@ -137,16 +221,16 @@ resource "aws_iam_role_policy_attachment" "lambda_attach" {
   policy_arn = aws_iam_policy.lambda_policy.arn
 }
 
-# 4. Package backend Python code into a deployment zip
+# 6. Package Lambda
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_file = "${path.module}/../backend/lambda_handler.py"
   output_path = "${path.module}/lambda_payload.zip"
 }
 
-# 5. AWS Lambda Function
+# 7. Lambda Function
 resource "aws_lambda_function" "tuition_backend" {
-  function_name    = "tuition-app-backend"
+  function_name    = "krishna-tuition-backend"
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
   role             = aws_iam_role.lambda_exec_role.arn
@@ -161,13 +245,13 @@ resource "aws_lambda_function" "tuition_backend" {
   }
 
   tags = {
-    Project = "tuition-platform"
+    Project = "krishna-tuitions"
   }
 }
 
-# 6. HTTP API Gateway & Routes
+# 8. HTTP API Gateway v2
 resource "aws_apigatewayv2_api" "http_api" {
-  name          = "tuition-app-api"
+  name          = "krishna-tuition-api"
   protocol_type = "HTTP"
 
   cors_configuration {
@@ -206,12 +290,22 @@ resource "aws_lambda_permission" "api_gw_permission" {
 }
 
 # Outputs
+output "cloudfront_url" {
+  description = "Fast Global CloudFront CDN Web Endpoint"
+  value       = "https://${aws_cloudfront_distribution.s3_distribution.domain_name}"
+}
+
 output "s3_website_url" {
-  description = "Frontend Public Website Endpoint"
+  description = "Direct S3 Website Endpoint"
   value       = "http://${aws_s3_bucket_website_configuration.frontend_hosting.website_endpoint}"
 }
 
 output "api_endpoint" {
   description = "Backend REST API Base URL"
   value       = aws_apigatewayv2_api.http_api.api_endpoint
+}
+
+output "cognito_user_pool_id" {
+  description = "Cognito User Pool ID"
+  value       = aws_cognito_user_pool.pool.id
 }
