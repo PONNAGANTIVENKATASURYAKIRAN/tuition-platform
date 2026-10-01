@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tuition Management Platform</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col pb-16">
+
+  <!-- TOP HEADER -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-sm">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span id="brand-title" class="font-bold text-slate-900 text-sm tracking-tight">Tuition Platform</span>
+            <span class="text-[10px] font-semibold bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full border border-emerald-200">Production v1.0</span>
+          </div>
+          <span class="text-[11px] text-slate-500 font-medium">Academic Supervision & Outbound Portal</span>
+        </div>
+      </div>
+
+      <!-- ROLE SELECTOR & TELEMETRY -->
+      <div class="flex items-center space-x-2">
+        <div class="bg-slate-100 p-1 rounded-xl flex items-center text-xs font-semibold">
+          <button id="nav-btn-director" onclick="switchRole('director')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-700 shadow-sm transition">
+            <i class="fa-solid fa-shield-halved mr-1"></i>Director
+          </button>
+          <button id="nav-btn-tutor" onclick="switchRole('tutor')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">
+            <i class="fa-solid fa-user-pen mr-1"></i>Tutor
+          </button>
+          <button id="nav-btn-teacher" onclick="switchRole('teacher')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition">
+            <i class="fa-solid fa-chalkboard-user mr-1"></i>Teacher
+          </button>
+        </div>
+        <button onclick="toggleDevOpsDrawer()" class="px-2.5 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold shadow-sm transition">
+          <i class="fa-solid fa-cloud text-indigo-600 mr-1"></i>AWS Logs
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEW -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5 space-y-5">
+    
+    <!-- 1. DIRECTOR WORKSPACE -->
+    <div id="view-director" class="space-y-4">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h2 class="text-base font-bold text-slate-900">Director Control Desk</h2>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">Admin</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-0.5">Manage parent notifications, attendance verification, and student registries.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1 text-xs">
+            <i class="fa-brands fa-whatsapp text-emerald-600 mr-2 text-sm"></i>
+            <span class="text-slate-500 mr-1.5 text-[11px] font-medium">Sender:</span>
+            <select id="director-sender-select" class="bg-transparent font-bold text-slate-800 text-xs focus:outline-none"></select>
+          </div>
+          <button onclick="openEnrollModal()" class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs flex items-center space-x-1.5 transition">
+            <i class="fa-solid fa-user-plus text-[11px]"></i><span>Enroll Student</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Director Navigation Tabs -->
+      <div class="flex items-center space-x-2 border-b border-slate-200 text-xs font-semibold overflow-x-auto pb-1">
+        <button onclick="switchDirectorTab('alerts')" id="dtab-alerts" class="px-3.5 py-2 text-indigo-700 border-b-2 border-indigo-700 flex items-center space-x-1.5 whitespace-nowrap">
+          <i class="fa-brands fa-whatsapp"></i><span>WhatsApp Alerts</span>
+          <span id="badge-total-alerts" class="ml-1 px-1.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-[10px] font-mono font-bold">0</span>
+        </button>
+        <button onclick="switchDirectorTab('students')" id="dtab-students" class="px-3.5 py-2 text-slate-500 hover:text-slate-800 flex items-center space-x-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-users"></i><span>Students (<span id="d-total-count">0</span>)</span>
+        </button>
+        <button onclick="switchDirectorTab('staff')" id="dtab-staff" class="px-3.5 py-2 text-slate-500 hover:text-slate-800 flex items-center space-x-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-user-tie"></i><span>Staff Attendance</span>
+        </button>
+        <button onclick="switchDirectorTab('fees')" id="dtab-fees" class="px-3.5 py-2 text-slate-500 hover:text-slate-800 flex items-center space-x-1.5 whitespace-nowrap">
+          <i class="fa-solid fa-indian-rupee-sign"></i><span>Tuition Fees</span>
+        </button>
+      </div>
+
+      <!-- Alerts Panel -->
+      <div id="dpanel-alerts" class="space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2 bg-white p-3 rounded-xl border border-slate-200 text-xs">
+          <div class="flex items-center space-x-1.5">
+            <button onclick="filterAlerts('ALL')" id="abtn-ALL" class="alert-btn px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-semibold">All Alerts</button>
+            <button onclick="filterAlerts('ABSENT')" id="abtn-ABSENT" class="alert-btn px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-medium">Absentees</button>
+            <button onclick="filterAlerts('SLIP_TEST')" id="abtn-SLIP_TEST" class="alert-btn px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-medium">Slip Tests</button>
+          </div>
+          <button onclick="dispatchAllAlerts()" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center space-x-1.5">
+            <i class="fa-brands fa-whatsapp text-sm"></i><span>Send First In Queue</span>
+          </button>
+        </div>
+        <div id="alerts-card-list" class="space-y-2.5"></div>
+      </div>
+
+      <!-- Students Panel -->
+      <div id="dpanel-students" class="hidden space-y-3">
+        <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <select id="d-student-grade-filter" onchange="renderDirectorStudents()" class="px-2.5 py-1.5 rounded-lg border border-slate-300 text-xs bg-white">
+              <option value="ALL">All Classes / Streams</option>
+              <option value="Class 10">Class 10</option>
+              <option value="Class 9">Class 9</option>
+              <option value="Inter 2nd Year">Inter 2nd Year</option>
+            </select>
+            <input type="text" id="d-student-search" oninput="renderDirectorStudents()" placeholder="Search student name..." class="px-3 py-1.5 rounded-lg border border-slate-300 text-xs w-full sm:w-64" />
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold">
+                <tr>
+                  <th class="p-3">Student Name</th>
+                  <th class="p-3">Class & Stream</th>
+                  <th class="p-3">Phone</th>
+                  <th class="p-3">Today Status</th>
+                  <th class="p-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="director-students-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff Attendance Panel -->
+      <div id="dpanel-staff" class="hidden space-y-3">
+        <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold">
+                <tr>
+                  <th class="p-3">Staff Name & Role</th>
+                  <th class="p-3">Base Pay</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Attendance Action</th>
+                </tr>
+              </thead>
+              <tbody id="director-staff-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Fees Ledger Panel -->
+      <div id="dpanel-fees" class="hidden space-y-3">
+        <div class="bg-white rounded-xl border border-slate-200 p-4 shadow-sm space-y-3">
+          <div class="grid grid-cols-3 gap-3 text-center text-xs">
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+              <span class="text-slate-400 block text-[10px] uppercase">Expected</span>
+              <span id="fee-total-expected" class="text-base font-bold text-slate-800 font-mono">0</span>
+            </div>
+            <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200">
+              <span class="text-emerald-700 block text-[10px] uppercase">Collected</span>
+              <span id="fee-total-collected" class="text-base font-bold text-emerald-700 font-mono">0</span>
+            </div>
+            <div class="p-3 bg-rose-50 rounded-xl border border-rose-200">
+              <span class="text-rose-700 block text-[10px] uppercase">Pending</span>
+              <span id="fee-total-pending" class="text-base font-bold text-rose-700 font-mono">0</span>
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[10px] font-bold">
+                <tr>
+                  <th class="p-3">Student</th>
+                  <th class="p-3">Class</th>
+                  <th class="p-3">Monthly Fee</th>
+                  <th class="p-3">Payment Status</th>
+                  <th class="p-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="fee-table-body" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- 2. TUTOR WORKSPACE -->
+    <div id="view-tutor" class="hidden space-y-4">
+      <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center space-x-2 text-xs">
+          <button onclick="setTutorFilter('ALL')" id="tbtn-all" class="px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold">All</button>
+          <button onclick="setTutorFilter('PRESENT')" id="tbtn-present" class="px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium">Present</button>
+        </div>
+        <button onclick="pushAbsenteesToDirectorAlerts()" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs flex items-center space-x-1">
+          <i class="fa-solid fa-paper-plane mr-1"></i>Push Absentees to Alerts
+        </button>
+      </div>
+      <div id="tutor-cards-container" class="space-y-2.5"></div>
+    </div>
+
+    <!-- 3. TEACHER WORKSPACE -->
+    <div id="view-teacher" class="hidden space-y-4">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <h2 class="text-sm font-bold text-slate-900">Teacher Doubt Clearance</h2>
+        <p class="text-xs text-slate-500">Record academic doubt clearance logs per student.</p>
+      </div>
+      <div id="teacher-queue-container" class="space-y-2.5"></div>
+    </div>
+
+  </main>
+
+  <!-- MODAL: STUDENT DOSSIER -->
+  <div id="student-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-2xl w-full p-5 space-y-4 shadow-2xl border border-slate-200 text-xs">
+      <div class="flex items-start justify-between border-b border-slate-100 pb-3">
+        <div>
+          <h3 id="dossier-name" class="font-bold text-base text-slate-900">Student Name</h3>
+          <p id="dossier-grade-badge" class="text-slate-500 font-mono mt-0.5">Class</p>
+        </div>
+        <button onclick="closeStudentModal()" class="text-slate-400 hover:text-slate-600 text-lg font-bold">✕</button>
+      </div>
+      
+      <div class="space-y-3">
+        <h4 class="font-bold text-slate-800 uppercase tracking-wider text-[11px]">Log Slip Test</h4>
+        <form onsubmit="handleSaveSlipTest(event)" class="space-y-2.5 bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="st-topic-input" required placeholder="Topic Name" class="px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white" />
+            <div class="flex items-center space-x-1">
+              <input type="number" id="st-score" required placeholder="Score" class="w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white" />
+              <span>/</span>
+              <input type="number" id="st-max" required placeholder="Max" class="w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white" />
+            </div>
+          </div>
+          <input type="text" id="st-remarks" required placeholder="Remarks (e.g. Excellent work)" class="w-full px-2.5 py-1.5 rounded-lg border border-slate-300 bg-white" />
+          <div class="flex justify-end space-x-2 pt-1">
+            <button type="submit" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg font-semibold">Save Record</button>
+            <button type="button" onclick="queueSlipTestToDirectorAlerts()" class="px-3 py-1.5 bg-emerald-600 text-white rounded-lg font-semibold">Queue WhatsApp Alert</button>
+          </div>
+        </form>
+        <div id="dossier-slip-tests-list" class="space-y-1.5 pt-1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ENROLL STUDENT -->
+  <div id="enroll-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-5 space-y-3.5 shadow-2xl border border-slate-200 text-xs">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <h4 class="font-bold text-slate-900 text-sm">Enroll New Student</h4>
+        <button onclick="closeEnrollModal()" class="text-slate-400 hover:text-slate-600 text-base font-bold">✕</button>
+      </div>
+      <form onsubmit="handleEnrollStudent(event)" class="space-y-3">
+        <input type="text" id="en-name" required placeholder="Student Full Name" class="w-full px-3 py-1.5 rounded-lg border border-slate-300" />
+        <div class="grid grid-cols-2 gap-2">
+          <input type="text" id="en-school" required placeholder="School / College" class="w-full px-3 py-1.5 rounded-lg border border-slate-300" />
+          <input type="text" id="en-area" required placeholder="Area / City" class="w-full px-3 py-1.5 rounded-lg border border-slate-300" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <select id="en-grade" class="w-full px-2 py-1.5 rounded-lg border border-slate-300 bg-white">
+            <option value="Class 10">Class 10</option>
+            <option value="Class 9">Class 9</option>
+            <option value="Inter 2nd Year">Inter 2nd Year</option>
+          </select>
+          <input type="tel" id="en-phone" pattern="[0-9]{10}" required placeholder="10-digit Phone" class="w-full px-3 py-1.5 rounded-lg border border-slate-300" />
+        </div>
+        <input type="number" id="en-fee" required value="1500" placeholder="Monthly Fee" class="w-full px-3 py-1.5 rounded-lg border border-slate-300" />
+        <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl">Enroll Student</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- DEVOPS & AWS TELEMETRY DRAWER -->
+  <div id="devops-drawer" class="hidden fixed bottom-4 right-4 max-w-sm w-full bg-slate-900 text-slate-100 p-4 rounded-2xl shadow-2xl border border-slate-800 z-50 text-xs">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+      <span class="text-emerald-400 font-bold"><i class="fa-solid fa-server mr-1"></i>AWS Serverless Architecture</span>
+      <button onclick="toggleDevOpsDrawer()" class="text-slate-400 hover:text-white">✕</button>
+    </div>
+    <div class="space-y-1 text-slate-300 text-[11px]">
+      <div>API Gateway: <span class="text-indigo-400">REST (Cognito Authorizer)</span></div>
+      <div>Database: <span class="text-amber-400">DynamoDB (PK: ID, SK: TYPE)</span></div>
+      <div>Static Host: <span class="text-sky-400">S3 + CloudFront CDN</span></div>
+      <div>Compute: <span class="text-emerald-400">AWS Lambda (Python 3.12)</span></div>
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    // 1. White-label Configuration (Change values to rebrand instantly)
+    const APP_CONFIG = {
+      institutionName: "Universal Tuition Platform", // Change to "Krishna Tuition Institutions" as needed
+      directors: [
+        { id: "dir_primary", label: "Director Office (+91 8008717360)", phone: "8008717360" },
+        { id: "dir_secondary", label: "Supervision Desk (+91 9848123450)", phone: "9848123450" }
+      ]
+    };
+
+    let currentRole = "director";
+    let activeDirectorTab = "alerts";
+    let alertFilter = "ALL";
+    let activeStudentId = "STU-001";
+    let tutorFloorFilter = "ALL";
+
+    let faculty = [
+      { id: "FAC-1", name: "Mr. K. V. Sharma", role: "Teacher", baseSalary: 15000, today: "PRESENT" },
+      { id: "FAC-2", name: "Srinivas", role: "Tutor", baseSalary: 12000, today: "PRESENT" }
+    ];
+
+    let students = [
+      { id: "STU-001", name: "M. Sai Tarun", grade: "Class 10", school: "Bhashyam High School", area: "Brodipet", phone: "9391645396", attendanceToday: "PRESENT", fee: 1500, feeStatus: "PAID", slipTests: [{ topic: "Quadratic Equations", score: 18, max: 20, remarks: "Clean step presentation" }] },
+      { id: "STU-002", name: "K. Bhavya", grade: "Class 9", school: "Oxford Grammar School", area: "Chandramouli Nagar", phone: "9848099887", attendanceToday: "ABSENT", fee: 1600, feeStatus: "UNPAID", slipTests: [] }
+    ];
+
+    let alertsQueue = [
+      { id: "ALT-1", category: "ABSENT", studentName: "K. Bhavya", grade: "Class 9", phone: "9848099887", text: "Dear Parents, We noticed that your ward, K. Bhavya, was absent today at the tuition session." }
+    ];
+
+    window.onload = function() {
+      document.getElementById("brand-title").textContent = APP_CONFIG.institutionName;
+      const senderSelect = document.getElementById("director-sender-select");
+      senderSelect.innerHTML = "";
+      APP_CONFIG.directors.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d.phone;
+        opt.textContent = d.label;
+        senderSelect.appendChild(opt);
+      });
+      renderDirectorWorkspace();
+    };
+
+    function switchRole(role) {
+      currentRole = role;
+      document.getElementById("view-director").classList.toggle("hidden", role !== "director");
+      document.getElementById("view-tutor").classList.toggle("hidden", role !== "tutor");
+      document.getElementById("view-teacher").classList.toggle("hidden", role !== "teacher");
+
+      ['director', 'tutor', 'teacher'].forEach(r => {
+        const btn = document.getElementById(`nav-btn-${r}`);
+        btn.className = (r === role)
+          ? "px-3 py-1.5 rounded-lg bg-white text-indigo-700 shadow-sm transition"
+          : "px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition";
+      });
+
+      if (role === "director") renderDirectorWorkspace();
+      if (role === "tutor") renderTutorCards();
+      if (role === "teacher") renderTeacherQueue();
+    }
+
+    function switchDirectorTab(tab) {
+      activeDirectorTab = tab;
+      ['alerts', 'students', 'staff', 'fees'].forEach(t => {
+        document.getElementById(`dpanel-${t}`).classList.toggle("hidden", t !== tab);
+        const btn = document.getElementById(`dtab-${t}`);
+        btn.className = (t === tab)
+          ? "px-3.5 py-2 text-indigo-700 border-b-2 border-indigo-700 flex items-center space-x-1.5 whitespace-nowrap"
+          : "px-3.5 py-2 text-slate-500 hover:text-slate-800 flex items-center space-x-1.5 whitespace-nowrap";
+      });
+      if (tab === "students") renderDirectorStudents();
+      if (tab === "staff") renderDirectorStaff();
+      if (tab === "fees") renderFeeLedger();
+    }
+
+    function renderDirectorWorkspace() {
+      document.getElementById("badge-total-alerts").textContent = alertsQueue.length;
+      document.getElementById("d-total-count").textContent = students.length;
+      renderAlertsQueue();
+    }
+
+    function filterAlerts(cat) {
+      alertFilter = cat;
+      document.querySelectorAll(".alert-btn").forEach(b => b.className = "alert-btn px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-medium");
+      document.getElementById(`abtn-${cat}`).className = "alert-btn px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-semibold";
+      renderAlertsQueue();
+    }
+
+    function renderAlertsQueue() {
+      const cont = document.getElementById("alerts-card-list");
+      cont.innerHTML = "";
+      const list = alertFilter === "ALL" ? alertsQueue : alertsQueue.filter(a => a.category === alertFilter);
+      if (list.length === 0) {
+        cont.innerHTML = `<div class="p-6 text-center bg-white rounded-xl border border-slate-200 text-slate-400">No pending alerts in this category.</div>`;
+        return;
+      }
+      list.forEach(item => {
+        const div = document.createElement("div");
+        div.className = "p-3.5 rounded-xl bg-white border border-slate-200 shadow-sm space-y-2";
+        div.innerHTML = `
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-900">${item.studentName} (${item.grade})</span>
+            <span class="text-slate-400 font-mono">${item.phone}</span>
+          </div>
+          <p class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">${item.text}</p>
+          <div class="flex justify-end space-x-2 pt-1 text-xs">
+            <button onclick="dismissAlert('${item.id}')" class="px-2.5 py-1 text-slate-500 hover:text-slate-800">Dismiss</button>
+            <button onclick="dispatchAlertWhatsApp('${item.id}')" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold flex items-center space-x-1">
+              <i class="fa-brands fa-whatsapp text-sm"></i><span>Send WhatsApp</span>
+            </button>
+          </div>`;
+        cont.appendChild(div);
+      });
+    }
+
+    function dispatchAlertWhatsApp(id) {
+      const a = alertsQueue.find(x => x.id === id);
+      if (!a) return;
+      window.open(`https://wa.me/91${a.phone}?text=${encodeURIComponent(a.text)}`, '_blank');
+      dismissAlert(id);
+    }
+
+    function dismissAlert(id) {
+      alertsQueue = alertsQueue.filter(x => x.id !== id);
+      document.getElementById("badge-total-alerts").textContent = alertsQueue.length;
+      renderAlertsQueue();
+    }
+
+    function dispatchAllAlerts() {
+      if (alertsQueue.length === 0) return alert("Alert queue is empty");
+      dispatchAlertWhatsApp(alertsQueue[0].id);
+    }
+
+    function renderDirectorStudents() {
+      const tbody = document.getElementById("director-students-table-body");
+      tbody.innerHTML = "";
+      const filter = document.getElementById("d-student-grade-filter").value;
+      const search = document.getElementById("d-student-search").value.toLowerCase();
+      let list = students;
+      if (filter !== "ALL") list = list.filter(s => s.grade === filter);
+      if (search) list = list.filter(s => s.name.toLowerCase().includes(search));
+
+      list.forEach(s => {
+        const tr = document.createElement("tr");
+        tr.className = "hover:bg-slate-50";
+        tr.innerHTML = `
+          <td class="p-3 font-bold text-indigo-700 cursor-pointer hover:underline" onclick="openStudentModal('${s.id}')">${s.name}</td>
+          <td class="p-3">${s.grade}</td>
+          <td class="p-3 font-mono"><a href="tel:${s.phone}" class="text-indigo-600 font-bold hover:underline">${s.phone}</a></td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.attendanceToday === 'PRESENT' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">${s.attendanceToday}</span></td>
+          <td class="p-3 text-right"><button onclick="openStudentModal('${s.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded text-slate-700 font-semibold">Inspect</button></td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderDirectorStaff() {
+      const tbody = document.getElementById("director-staff-table-body");
+      tbody.innerHTML = "";
+      faculty.forEach(st => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="p-3"><span class="font-bold text-slate-900 block">${st.name}</span><span class="text-slate-400 text-[11px]">${st.role}</span></td>
+          <td class="p-3 font-mono">₹${st.baseSalary.toLocaleString('en-IN')}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${st.today === 'PRESENT' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">${st.today}</span></td>
+          <td class="p-3 text-right">
+            <button onclick="toggleStaffAttendance('${st.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded font-semibold">Toggle Status</button>
+          </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function toggleStaffAttendance(id) {
+      const st = faculty.find(f => f.id === id);
+      if (st) {
+        st.today = st.today === "PRESENT" ? "ABSENT" : "PRESENT";
+        renderDirectorStaff();
+      }
+    }
+
+    function renderFeeLedger() {
+      const tbody = document.getElementById("fee-table-body");
+      tbody.innerHTML = "";
+      let expected = 0, collected = 0, pending = 0;
+      students.forEach(s => {
+        expected += s.fee;
+        if (s.feeStatus === "PAID") collected += s.fee;
+        else pending += s.fee;
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td class="p-3 font-bold">${s.name}</td>
+          <td class="p-3">${s.grade}</td>
+          <td class="p-3 font-mono">₹${s.fee}</td>
+          <td class="p-3"><span class="px-2 py-0.5 rounded text-[10px] font-bold ${s.feeStatus === 'PAID' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">${s.feeStatus}</span></td>
+          <td class="p-3 text-right"><button onclick="toggleFeeStatus('${s.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded font-semibold">Toggle</button></td>`;
+        tbody.appendChild(tr);
+      });
+      document.getElementById("fee-total-expected").textContent = `₹${expected}`;
+      document.getElementById("fee-total-collected").textContent = `₹${collected}`;
+      document.getElementById("fee-total-pending").textContent = `₹${pending}`;
+    }
+
+    function toggleFeeStatus(id) {
+      const s = students.find(st => st.id === id);
+      if (s) {
+        s.feeStatus = s.feeStatus === "PAID" ? "UNPAID" : "PAID";
+        renderFeeLedger();
+      }
+    }
+
+    function setTutorFilter(f) {
+      tutorFloorFilter = f;
+      document.getElementById("tbtn-all").className = f === 'ALL' ? "px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold" : "px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium";
+      document.getElementById("tbtn-present").className = f === 'PRESENT' ? "px-3 py-1.5 rounded-lg bg-indigo-50 text-indigo-700 font-bold" : "px-3 py-1.5 rounded-lg bg-slate-100 text-slate-600 font-medium";
+      renderTutorCards();
+    }
+
+    function renderTutorCards() {
+      const cont = document.getElementById("tutor-cards-container");
+      cont.innerHTML = "";
+      let list = tutorFloorFilter === "PRESENT" ? students.filter(s => s.attendanceToday === "PRESENT") : students;
+      list.forEach(s => {
+        const card = document.createElement("div");
+        card.className = "p-3.5 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between text-xs";
+        card.innerHTML = `
+          <div>
+            <span class="font-bold text-slate-900 cursor-pointer hover:underline" onclick="openStudentModal('${s.id}')">${s.name} (${s.grade})</span>
+            <span class="text-slate-400 block text-[11px]">${s.school}</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <button onclick="toggleAttendance('${s.id}')" class="px-2.5 py-1 rounded text-xs font-bold ${s.attendanceToday === 'PRESENT' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${s.attendanceToday}</button>
+            <button onclick="openStudentModal('${s.id}')" class="px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 font-semibold">Dossier</button>
+          </div>`;
+        cont.appendChild(card);
+      });
+    }
+
+    function toggleAttendance(id) {
+      const s = students.find(st => st.id === id);
+      if (s) {
+        s.attendanceToday = s.attendanceToday === "PRESENT" ? "ABSENT" : "PRESENT";
+        renderTutorCards();
+      }
+    }
+
+    function pushAbsenteesToDirectorAlerts() {
+      const abs = students.filter(s => s.attendanceToday === "ABSENT");
+      if (abs.length === 0) return alert("No absentees to push");
+      abs.forEach(s => {
+        if (!alertsQueue.some(a => a.studentName === s.name && a.category === "ABSENT")) {
+          alertsQueue.push({
+            id: `ALT-${Date.now()}-${s.id}`,
+            category: "ABSENT",
+            studentName: s.name,
+            grade: s.grade,
+            phone: s.phone,
+            text: `Dear Parents, Warm greetings from ${APP_CONFIG.institutionName}. We noticed that your ward, ${s.name}, was absent today.`
+          });
+        }
+      });
+      document.getElementById("badge-total-alerts").textContent = alertsQueue.length;
+      alert(`Pushed ${abs.length} absentees to Director Alerts queue.`);
+    }
+
+    function renderTeacherQueue() {
+      const cont = document.getElementById("teacher-queue-container");
+      cont.innerHTML = "";
+      students.forEach(s => {
+        const div = document.createElement("div");
+        div.className = "p-3.5 bg-white rounded-xl border border-slate-200 flex items-center justify-between text-xs";
+        div.innerHTML = `
+          <div>
+            <span class="font-bold text-slate-900 block">${s.name} (${s.grade})</span>
+            <span class="text-slate-400">${s.school}</span>
+          </div>
+          <button onclick="promptDoubtClear('${s.name}')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">Log Doubt Cleared</button>`;
+        cont.appendChild(div);
+      });
+    }
+
+    function promptDoubtClear(name) {
+      const topic = prompt(`Enter topic where ${name} cleared doubts:`, "Calculus");
+      if (topic) alert(`Logged doubt cleared for ${name} in ${topic}.`);
+    }
+
+    function openStudentModal(id) {
+      activeStudentId = id;
+      const s = students.find(st => st.id === id);
+      if (!s) return;
+      document.getElementById("dossier-name").textContent = s.name;
+      document.getElementById("dossier-grade-badge").textContent = `${s.grade} • ${s.phone}`;
+      renderSlipTestsUI(s);
+      document.getElementById("student-modal").classList.remove("hidden");
+    }
+
+    function closeStudentModal() {
+      document.getElementById("student-modal").classList.add("hidden");
+    }
+
+    function renderSlipTestsUI(s) {
+      const list = document.getElementById("dossier-slip-tests-list");
+      list.innerHTML = "";
+      s.slipTests.forEach(test => {
+        const div = document.createElement("div");
+        div.className = "p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex items-center justify-between text-xs";
+        div.innerHTML = `
+          <div><span class="font-bold text-slate-900">${test.topic}</span><p class="text-[11px] text-slate-500 italic">${test.remarks}</p></div>
+          <span class="font-mono font-bold text-indigo-700 bg-white px-2 py-0.5 rounded border border-indigo-100">${test.score}/${test.max}</span>`;
+        list.appendChild(div);
+      });
+    }
+
+    function handleSaveSlipTest(e) {
+      e.preventDefault();
+      const s = students.find(st => st.id === activeStudentId);
+      const topic = document.getElementById("st-topic-input").value;
+      const score = document.getElementById("st-score").value;
+      const max = document.getElementById("st-max").value;
+      const remarks = document.getElementById("st-remarks").value;
+      s.slipTests.unshift({ topic, score, max, remarks });
+      renderSlipTestsUI(s);
+      e.target.reset();
+    }
+
+    function queueSlipTestToDirectorAlerts() {
+      const s = students.find(st => st.id === activeStudentId);
+      if (s.slipTests.length === 0) return alert("Save a test record first.");
+      const t = s.slipTests[0];
+      alertsQueue.unshift({
+        id: `ALT-${Date.now()}`,
+        category: "SLIP_TEST",
+        studentName: s.name,
+        grade: s.grade,
+        phone: s.phone,
+        text: `Dear Parents, Warm greetings from ${APP_CONFIG.institutionName}. Slip test report for ${s.name}: Topic: ${t.topic}, Score: ${t.score}/${t.max}. Remarks: ${t.remarks}`
+      });
+      document.getElementById("badge-total-alerts").textContent = alertsQueue.length;
+      alert("Slip test queued to WhatsApp alerts.");
+    }
+
+    function openEnrollModal() { document.getElementById("enroll-modal").classList.remove("hidden"); }
+    function closeEnrollModal() { document.getElementById("enroll-modal").classList.add("hidden"); }
+    function handleEnrollStudent(e) {
+      e.preventDefault();
+      const name = document.getElementById("en-name").value;
+      const school = document.getElementById("en-school").value;
+      const area = document.getElementById("en-area").value;
+      const grade = document.getElementById("en-grade").value;
+      const phone = document.getElementById("en-phone").value;
+      const fee = parseInt(document.getElementById("en-fee").value) || 1500;
+      students.unshift({ id: `STU-00${students.length + 1}`, name, school, area, grade, phone, attendanceToday: "PRESENT", fee, feeStatus: "UNPAID", slipTests: [] });
+      renderDirectorStudents();
+      closeEnrollModal();
+      e.target.reset();
+    }
+
+    function toggleDevOpsDrawer() {
+      document.getElementById("devops-drawer").classList.toggle("hidden");
+    }
+  </script>
+</body>
+</html>
