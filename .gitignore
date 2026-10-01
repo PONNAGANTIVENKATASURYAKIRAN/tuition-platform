@@ -1,0 +1,40 @@
+# Terraform local state and caching
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+
+# Sensitive environment credentials
+.env
+.env.*
+*.pem
+*.key
+*.cer
+
+# IDE and OS files
+.vscode/*
+!.vscode/settings.json
+.idea/
+.DS_Store
+Thumbs.db
