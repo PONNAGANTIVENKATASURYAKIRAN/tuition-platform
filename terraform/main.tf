@@ -9,6 +9,10 @@ terraform {
       source  = "hashicorp/archive"
       version = "~> 2.4"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.5"
+    }
   }
 }
 
@@ -22,9 +26,18 @@ variable "aws_region" {
   description = "Target AWS deployment region"
 }
 
-# 1. DynamoDB Single Table
+# Generates a unique 6-character hex suffix to guarantee no collisions
+resource "random_id" "suffix" {
+  byte_length = 3
+}
+
+locals {
+  app_prefix = "kt-${random_id.suffix.hex}"
+}
+
+# 1. DynamoDB Single-Table
 resource "aws_dynamodb_table" "tuition_table" {
-  name         = "krishna-tuition-table"
+  name         = "${local.app_prefix}-table"
   billing_mode = "PAY_PER_REQUEST"
   hash_key     = "id"
 
@@ -40,7 +53,7 @@ resource "aws_dynamodb_table" "tuition_table" {
 
 # 2. S3 Bucket for Static Web Hosting
 resource "aws_s3_bucket" "frontend_bucket" {
-  bucket_prefix = "krishna-tuition-frontend-"
+  bucket        = "${local.app_prefix}-frontend"
   force_destroy = true
 
   tags = {
@@ -82,7 +95,7 @@ resource "aws_s3_bucket_policy" "frontend_policy" {
   })
 }
 
-# 3. AWS CloudFront Distribution (Edge Caching CDN - Free 1TB/mo)
+# 3. AWS CloudFront Distribution (Edge CDN - Free 1TB/mo)
 resource "aws_cloudfront_distribution" "s3_distribution" {
   origin {
     domain_name = aws_s3_bucket_website_configuration.frontend_hosting.website_endpoint
@@ -133,9 +146,9 @@ resource "aws_cloudfront_distribution" "s3_distribution" {
   }
 }
 
-# 4. Amazon Cognito User Pool (Auth & Director Approval Gate - Free 50k MAUs)
+# 4. Amazon Cognito User Pool (Free 50k MAUs)
 resource "aws_cognito_user_pool" "pool" {
-  name = "krishna-tuition-user-pool"
+  name = "${local.app_prefix}-user-pool"
 
   admin_create_user_config {
     allow_admin_create_user_only = false
@@ -149,7 +162,7 @@ resource "aws_cognito_user_pool" "pool" {
 }
 
 resource "aws_cognito_user_pool_client" "client" {
-  name         = "krishna-tuition-client"
+  name         = "${local.app_prefix}-client"
   user_pool_id = aws_cognito_user_pool.pool.id
 
   generate_secret = false
@@ -160,9 +173,9 @@ resource "aws_cognito_user_pool_client" "client" {
   ]
 }
 
-# 5. IAM Role for Lambda
+# 5. IAM Role & Policy for Lambda Microservice
 resource "aws_iam_role" "lambda_exec_role" {
-  name = "krishna-tuition-lambda-role"
+  name = "${local.app_prefix}-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -179,7 +192,7 @@ resource "aws_iam_role" "lambda_exec_role" {
 }
 
 resource "aws_iam_policy" "lambda_policy" {
-  name        = "krishna-tuition-lambda-policy"
+  name        = "${local.app_prefix}-lambda-policy"
   description = "Allows Lambda access to DynamoDB, CloudWatch, and Bedrock"
 
   policy = jsonencode({
@@ -221,7 +234,7 @@ resource "aws_iam_role_policy_attachment" "lambda_attach" {
   policy_arn = aws_iam_policy.lambda_policy.arn
 }
 
-# 6. Package Lambda
+# 6. Package Lambda Python Handler
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_file = "${path.module}/../backend/lambda_handler.py"
@@ -230,7 +243,7 @@ data "archive_file" "lambda_zip" {
 
 # 7. Lambda Function
 resource "aws_lambda_function" "tuition_backend" {
-  function_name    = "krishna-tuition-backend"
+  function_name    = "${local.app_prefix}-backend"
   filename         = data.archive_file.lambda_zip.output_path
   source_code_hash = data.archive_file.lambda_zip.output_base64sha256
   role             = aws_iam_role.lambda_exec_role.arn
@@ -251,7 +264,7 @@ resource "aws_lambda_function" "tuition_backend" {
 
 # 8. HTTP API Gateway v2
 resource "aws_apigatewayv2_api" "http_api" {
-  name          = "krishna-tuition-api"
+  name          = "${local.app_prefix}-api"
   protocol_type = "HTTP"
 
   cors_configuration {
@@ -298,6 +311,11 @@ output "cloudfront_url" {
 output "s3_website_url" {
   description = "Direct S3 Website Endpoint"
   value       = "http://${aws_s3_bucket_website_configuration.frontend_hosting.website_endpoint}"
+}
+
+output "s3_bucket_name" {
+  description = "Target S3 Bucket Name for Frontend"
+  value       = aws_s3_bucket.frontend_bucket.bucket
 }
 
 output "api_endpoint" {
