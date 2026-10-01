@@ -1,0 +1,36 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+  workflow_dispatch:
+
+jobs:
+  deploy-frontend:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Source Code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Sync Static Files to S3 Bucket
+        run: |
+          # Fetch bucket name dynamically matching prefix
+          BUCKET_NAME=$(aws s3api list-buckets --query "Buckets[?starts_with(Name, 'tuition-app-frontend-')].Name | [0]" --output text)
+          if [ "$BUCKET_NAME" != "None" ] && [ -n "$BUCKET_NAME" ]; then
+            echo "Deploying to bucket: $BUCKET_NAME"
+            aws s3 sync frontend/ s3://$BUCKET_NAME/ --delete
+          else
+            echo "Error: Target frontend S3 bucket not found. Run backend-deploy first."
+            exit 1
+          fi
