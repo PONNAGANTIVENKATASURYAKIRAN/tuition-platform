@@ -1,15 +1,19 @@
+"""AWS Lambda microservice for Tuition Platform backend."""
+
 import json
 import os
-import boto3
 from decimal import Decimal
 
+import boto3
+from botocore.exceptions import BotoCoreError, ClientError
 
-# Helper class to convert Decimal types to standard JSON numbers
+
+# Custom JSON encoder to handle DynamoDB Decimal types
 class DecimalEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, Decimal):
             return int(obj) if obj % 1 == 0 else float(obj)
-        return super(DecimalEncoder, self).default(obj)
+        return super().default(obj)
 
 
 # AWS DynamoDB Resource setup
@@ -18,8 +22,8 @@ TABLE_NAME = os.environ.get("TABLE_NAME", "tuition-app-table")
 table = dynamodb.Table(TABLE_NAME)
 
 
-# Standard response helper with CORS enabled for frontend calls
 def build_response(status_code, body):
+    """Return standard API Gateway proxy response with CORS enabled."""
     return {
         "statusCode": status_code,
         "headers": {
@@ -32,26 +36,20 @@ def build_response(status_code, body):
     }
 
 
-def lambda_handler(event, context):
-    """
-    Main Lambda entry point triggered by API Gateway
-    """
+def lambda_handler(event, _context):
+    """Main Lambda entry point triggered by API Gateway."""
     http_method = event.get("httpMethod", "")
-    path = event.get("path", "")
 
-    # Handle HTTP OPTIONS requests for CORS pre-flight checks
     if http_method == "OPTIONS":
         return build_response(200, {"message": "CORS preflight successful"})
 
     try:
-        # Route 1: GET /students -> List all students
         if http_method == "GET":
             response = table.scan()
             items = response.get("Items", [])
             return build_response(200, {"students": items})
 
-        # Route 2: POST /students -> Enroll a new student
-        elif http_method == "POST":
+        if http_method in ("POST", "PUT"):
             payload = json.loads(event.get("body", "{}"))
             student_id = payload.get("id")
 
@@ -59,25 +57,10 @@ def lambda_handler(event, context):
                 return build_response(400, {"error": "Missing student ID"})
 
             table.put_item(Item=payload)
-            return build_response(
-                201, {"message": "Student registered successfully", "student": payload}
-            )
+            msg = "Student registered" if http_method == "POST" else "Record updated"
+            return build_response(200, {"message": msg, "student": payload})
 
-        # Route 3: PUT /students -> Update attendance or tests
-        elif http_method == "PUT":
-            payload = json.loads(event.get("body", "{}"))
-            student_id = payload.get("id")
+        return build_response(405, {"error": f"Method {http_method} not allowed"})
 
-            if not student_id:
-                return build_response(400, {"error": "Missing student ID for update"})
-
-            table.put_item(Item=payload)
-            return build_response(
-                200, {"message": "Record updated successfully", "student": payload}
-            )
-
-        else:
-            return build_response(405, {"error": f"Method {http_method} not allowed"})
-
-    except Exception as err:
+    except (ClientError, BotoCoreError, json.JSONDecodeError) as err:
         return build_response(500, {"error": str(err)})
