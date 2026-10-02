@@ -33,7 +33,7 @@ variable "director_temp_pass" {
 }
 
 # -----------------------------------------------------------------------------
-# 1. AWS Cognito: Clean Fixed Names
+# 1. AWS Cognito: User Pool & Client
 # -----------------------------------------------------------------------------
 resource "aws_cognito_user_pool" "pool" {
   name = "krishna-tuition-user-pool"
@@ -85,7 +85,6 @@ resource "aws_cognito_user_pool_client" "client" {
   prevent_user_existence_errors = "ENABLED"
 }
 
-# Pre-seeded Director User
 resource "aws_cognito_user" "main_director" {
   user_pool_id = aws_cognito_user_pool.pool.id
   username     = var.director_email
@@ -138,7 +137,7 @@ resource "aws_iam_role" "lambda_exec_role" {
 }
 
 resource "aws_iam_policy" "lambda_policy" {
-  name = "krishna-tuition-lambda-policy"
+  name = "krishna-tuition-lambda-policy-v1"
 
   policy = jsonencode({
     Version   = "2012-10-17"
@@ -210,16 +209,18 @@ resource "aws_lambda_function" "backend_lambda" {
 }
 
 # -----------------------------------------------------------------------------
-# 5. API Gateway (HTTP API v2)
+# 5. API Gateway (HTTP API v2) with Complete Edge CORS Support
 # -----------------------------------------------------------------------------
 resource "aws_apigatewayv2_api" "http_api" {
   name          = "krishna-tuition-http-api"
   protocol_type = "HTTP"
 
   cors_configuration {
-    allow_origins = ["*"]
-    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
-    allow_headers = ["*"]
+    allow_origins  = ["*"]
+    allow_methods  = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_headers  = ["Content-Type", "Authorization", "*"]
+    expose_headers = ["*"]
+    max_age        = 300
   }
 }
 
