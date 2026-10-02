@@ -1,334 +1,387 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Krishna Tuition Institutions</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tuition Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
-    body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
     .font-mono { font-family: 'JetBrains Mono', monospace; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col antialiased">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- TOP HEADER (Authenticated) -->
-  <header id="app-header" class="hidden bg-white border-b border-slate-200 sticky top-0 z-30 px-4 h-16 flex items-center justify-between">
-    <div class="flex items-center space-x-2">
-      <div class="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-base shadow-sm">
-        <i class="fa-solid fa-graduation-cap"></i>
+  <!-- ==================== 1. INTERNAL AUTH OVERLAY ==================== -->
+  <div id="login-modal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+      
+      <!-- Brand Crest -->
+      <div class="text-center space-y-1.5">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white mx-auto flex items-center justify-center text-xl shadow-lg shadow-indigo-200">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <h2 id="login-brand-title" class="font-extrabold text-slate-900 text-lg tracking-tight">Krishna Tuition Institutions</h2>
+        <p class="text-[12px] text-slate-500 font-medium">Internal Staff Desk</p>
       </div>
-      <div>
-        <h1 class="text-sm font-bold text-slate-900 leading-tight">Krishna Tuitions</h1>
-        <span id="header-user-badge" class="text-[11px] font-semibold text-indigo-600 uppercase tracking-wide"></span>
+
+      <!-- Quick Role Selection -->
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Access Role</label>
+        <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-bold">
+          <button type="button" onclick="selectLoginRole('director')" id="role-pill-director" class="py-2 rounded-lg bg-white text-indigo-700 shadow-sm transition">Director</button>
+          <button type="button" onclick="selectLoginRole('tutor')" id="role-pill-tutor" class="py-2 rounded-lg text-slate-600 hover:text-slate-900 transition">Tutor</button>
+          <button type="button" onclick="selectLoginRole('teacher')" id="role-pill-teacher" class="py-2 rounded-lg text-slate-600 hover:text-slate-900 transition">Teacher</button>
+        </div>
+      </div>
+
+      <!-- Credentials Form -->
+      <form onsubmit="handleStaffLogin(event)" class="space-y-3">
+        <div>
+          <label class="text-[11px] font-bold text-slate-600 mb-1 block">Staff Phone / ID</label>
+          <input type="text" id="login-username" required placeholder="Registered Mobile Number" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+        </div>
+        <div>
+          <label class="text-[11px] font-bold text-slate-600 mb-1 block">PIN / Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+        </div>
+
+        <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-100 transition active:scale-95">
+          Enter Floor Desk
+        </button>
+      </form>
+
+      <div class="text-center">
+        <span class="text-[11px] text-slate-400 font-mono">Secured with AWS Cognito RBAC</span>
       </div>
     </div>
+  </div>
 
-    <div class="flex items-center space-x-2">
-      <span id="header-user-email" class="hidden sm:inline text-xs text-slate-500 font-medium"></span>
-      <button onclick="handleSignOut()" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 transition flex items-center space-x-1.5">
-        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-        <span>Logout</span>
-      </button>
+  <!-- ==================== 2. MAIN APP NAVIGATION ==================== -->
+  <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Status -->
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div>
+          <span id="app-brand-title" class="font-extrabold text-slate-900 text-sm tracking-tight block">Krishna Tuition Institutions</span>
+          <span class="text-[10px] text-emerald-600 font-bold flex items-center">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block mr-1"></span> Campus Portal
+          </span>
+        </div>
+      </div>
+
+      <!-- Quick Switcher & Logout -->
+      <div class="flex items-center space-x-2">
+        <div class="hidden sm:flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold">
+          <button id="nav-btn-director" onclick="switchRole('director')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-700 shadow-sm">Director</button>
+          <button id="nav-btn-tutor" onclick="switchRole('tutor')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">Tutor</button>
+          <button id="nav-btn-teacher" onclick="switchRole('teacher')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">Teacher</button>
+        </div>
+        <button onclick="logoutStaff()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 flex items-center justify-center transition" title="Log out">
+          <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+        </button>
+      </div>
+
     </div>
   </header>
 
-  <!-- ========================================== -->
-  <!-- 1. AUTHENTICATION SCREENS                  -->
-  <!-- ========================================== -->
-  <main id="auth-container" class="flex-1 flex items-center justify-center p-4">
+  <!-- ==================== 3. MAIN WORKSPACE ==================== -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-5 space-y-4">
 
-    <!-- Card 1: Main Sign In -->
-    <div id="card-signin" class="w-full max-w-sm bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
-      <div class="text-center space-y-1">
-        <div class="w-12 h-12 rounded-xl bg-indigo-600 text-white mx-auto flex items-center justify-center text-xl shadow-sm mb-3">
-          <i class="fa-solid fa-graduation-cap"></i>
-        </div>
-        <h2 class="text-xl font-bold text-slate-900">Krishna Tuitions</h2>
-        <p class="text-xs text-slate-500">Academic Management Portal</p>
-      </div>
-
-      <form onsubmit="handleSignIn(event)" class="space-y-3.5">
+    <!-- DIRECTOR CONSOLE -->
+    <div id="view-director" class="space-y-4">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
-          <input type="email" id="signin-email" required placeholder="name@institution.com" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <h2 class="text-sm font-bold text-slate-900">Director Control Desk</h2>
+          <p class="text-xs text-slate-500">Official dispatch, faculty attendance, and student operations.</p>
         </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
-          <input type="password" id="signin-password" required placeholder="••••••••" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-        <button type="submit" class="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-sm">
-          Sign In
-        </button>
-      </form>
-
-      <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-        <button onclick="toggleAuthView('signup')" class="font-semibold text-indigo-600 hover:underline">
-          Director Registration &rarr;
-        </button>
-        <button onclick="toggleAuthView('verify')" class="text-slate-500 hover:underline">
-          Enter OTP Code
-        </button>
-      </div>
-    </div>
-
-    <!-- Card 2: Director Sign-Up -->
-    <div id="card-signup" class="hidden w-full max-w-sm bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
-      <div class="text-center space-y-1">
-        <h2 class="text-lg font-bold text-slate-900">Director Registration</h2>
-        <p class="text-xs text-slate-500">Institutional Master Account</p>
-      </div>
-
-      <form onsubmit="handleDirectorSignUp(event)" class="space-y-3.5">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Full Name</label>
-          <input type="text" id="signup-name" required placeholder="Director Sir" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Official Email</label>
-          <input type="email" id="signup-email" required placeholder="director@institution.com" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Password</label>
-          <input type="password" id="signup-password" required minlength="8" placeholder="At least 8 characters" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-indigo-500">
-        </div>
-        <button type="submit" class="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-sm">
-          Send Email Verification Code
-        </button>
-      </form>
-
-      <div class="pt-3 border-t border-slate-100 text-center">
-        <button onclick="toggleAuthView('signin')" class="text-xs font-medium text-slate-500 hover:text-slate-800">
-          Already have an account? Sign In
-        </button>
-      </div>
-    </div>
-
-    <!-- Card 3: Email OTP Verification (Director & Staff) -->
-    <div id="card-verify" class="hidden w-full max-w-sm bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
-      <div class="text-center space-y-1">
-        <div class="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center text-lg mb-2">
-          <i class="fa-solid fa-envelope-circle-check"></i>
-        </div>
-        <h2 class="text-lg font-bold text-slate-900">Email Verification</h2>
-        <p class="text-xs text-slate-500">Enter the verification code sent to your email</p>
-      </div>
-
-      <form onsubmit="handleVerifyOtp(event)" class="space-y-3.5">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Email Address</label>
-          <input type="email" id="verify-email" required placeholder="your.email@tuition.internal" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">6-Digit Verification Code</label>
-          <input type="text" id="verify-code" required maxlength="6" placeholder="123456" class="w-full px-3 py-2 text-center tracking-widest text-lg font-mono rounded-lg border border-slate-300">
-        </div>
-        <button type="submit" class="w-full py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs transition shadow-sm">
-          Verify Email & Activate
-        </button>
-      </form>
-
-      <div class="pt-2 text-center">
-        <button onclick="toggleAuthView('signin')" class="text-xs text-slate-400 hover:text-slate-600">Back to Sign In</button>
-      </div>
-    </div>
-
-    <!-- Card 4: Tutor/Teacher Change Password Gate -->
-    <div id="card-change-password" class="hidden w-full max-w-sm bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-5">
-      <div class="text-center space-y-1">
-        <div class="w-10 h-10 rounded-full bg-amber-50 text-amber-600 mx-auto flex items-center justify-center text-lg mb-2">
-          <i class="fa-solid fa-key"></i>
-        </div>
-        <h2 class="text-lg font-bold text-slate-900">Set Your Personal Password</h2>
-        <p class="text-xs text-slate-500">Update your initial password. The Director will be synced automatically.</p>
-      </div>
-
-      <form onsubmit="handleStaffUpdatePassword(event)" class="space-y-3.5">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">New Personal Password</label>
-          <input type="password" id="staff-new-password" required minlength="8" placeholder="Enter new password" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 mb-1">Confirm New Password</label>
-          <input type="password" id="staff-confirm-password" required minlength="8" placeholder="Confirm new password" class="w-full px-3 py-2 text-xs rounded-lg border border-slate-300">
-        </div>
-        <button type="submit" class="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition shadow-sm">
-          Update Password & Enter Desk
-        </button>
-      </form>
-    </div>
-
-  </main>
-
-  <!-- ========================================== -->
-  <!-- 2. AUTHENTICATED PORTALS                   -->
-  <!-- ========================================== -->
-  <main id="app-container" class="hidden flex-1 max-w-5xl w-full mx-auto p-4 sm:p-6 space-y-6">
-
-    <!-- DIRECTOR PORTAL -->
-    <section id="portal-director" class="space-y-6">
-      
-      <!-- Top Action Bar -->
-      <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-        <div>
-          <h2 class="text-base font-bold text-slate-900">Director Executive Console</h2>
-          <p class="text-xs text-slate-500">Approve staff, inspect live passwords, and manage students.</p>
-        </div>
+        <!-- Dual Director Selector -->
         <div class="flex items-center space-x-2">
-          <button onclick="openModal('modal-add-staff')" class="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center space-x-1.5 transition">
-            <i class="fa-solid fa-user-plus text-[10px]"></i>
-            <span>Register Faculty</span>
-          </button>
-          <button onclick="openModal('modal-enroll-student')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center space-x-1.5 transition">
-            <i class="fa-solid fa-plus text-[10px]"></i>
-            <span>Enroll Student</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Staff Roster & Live Password Oversight -->
-      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-        <div class="p-3.5 border-b border-slate-100 flex items-center justify-between">
-          <div>
-            <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Faculty Approval & Active Passwords</h3>
-            <p class="text-[11px] text-slate-400">Director approval allows staff to receive email OTP. Passwords reflect here in real-time.</p>
+          <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs">
+            <i class="fa-brands fa-whatsapp text-emerald-600 mr-2 text-sm"></i>
+            <select id="director-active-sender" class="bg-transparent font-bold text-slate-800 text-xs focus:outline-none cursor-pointer">
+              <!-- Populated from config -->
+            </select>
           </div>
-          <span id="director-staff-count" class="text-xs text-slate-400 font-mono">0 Staff</span>
-        </div>
-        <div id="director-staff-list" class="divide-y divide-slate-100 text-xs">
-          <!-- Dynamically populated -->
-        </div>
-      </div>
-
-      <!-- Student Directory -->
-      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden shadow-xs">
-        <div class="p-3.5 border-b border-slate-100 flex items-center justify-between">
-          <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wide">Student Directory & Attendance</h3>
-          <span id="director-student-count" class="text-xs text-slate-400 font-mono">0 Students</span>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-50 border-b border-slate-100 text-slate-500 uppercase text-[10px] font-semibold">
-              <tr>
-                <th class="p-3">Student Name</th>
-                <th class="p-3">Grade</th>
-                <th class="p-3">Parent Phone</th>
-                <th class="p-3 text-center">Status</th>
-              </tr>
-            </thead>
-            <tbody id="director-students-table" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
-      </div>
-    </section>
-
-    <!-- TUTOR & TEACHER PORTAL -->
-    <section id="portal-staff" class="hidden space-y-4">
-      <div class="bg-white p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-        <div>
-          <h2 id="staff-welcome-title" class="text-base font-bold text-slate-900">Floor Desk</h2>
-          <p class="text-xs text-slate-500">Authenticated faculty session.</p>
-        </div>
-        <div class="flex items-center space-x-2">
-          <button onclick="toggleAuthView('change-password'); document.getElementById('app-container').classList.add('hidden'); document.getElementById('auth-container').classList.remove('hidden');" class="px-2.5 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 flex items-center space-x-1">
-            <i class="fa-solid fa-key text-[10px]"></i>
-            <span>Change My Password</span>
+          <button onclick="openEnrollModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs flex items-center space-x-1.5 shadow-sm">
+            <i class="fa-solid fa-user-plus text-[11px]"></i><span>Enroll Student</span>
           </button>
-          <div class="text-right text-xs font-mono bg-slate-50 px-2.5 py-1 rounded-lg border border-slate-200">
-            <span class="text-slate-400">P: </span><strong id="staff-present-count" class="text-emerald-600">0</strong>
-            <span class="text-slate-300 mx-1">|</span>
-            <span class="text-slate-400">A: </span><strong id="staff-absent-count" class="text-rose-600">0</strong>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex items-center space-x-2 border-b border-slate-200 text-xs font-bold overflow-x-auto">
+        <button onclick="switchDirectorTab('alerts')" id="dtab-alerts" class="px-3 py-2 text-indigo-700 border-b-2 border-indigo-700 whitespace-nowrap"><i class="fa-brands fa-whatsapp mr-1"></i>WhatsApp Alerts (<span id="d-badge-alerts">0</span>)</button>
+        <button onclick="switchDirectorTab('students')" id="dtab-students" class="px-3 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap"><i class="fa-solid fa-users mr-1"></i>Students (<span id="d-badge-students">0</span>)</button>
+        <button onclick="switchDirectorTab('staff')" id="dtab-staff" class="px-3 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap"><i class="fa-solid fa-user-tie mr-1"></i>Staff Attendance</button>
+        <button onclick="switchDirectorTab('fees')" id="dtab-fees" class="px-3 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap"><i class="fa-solid fa-indian-rupee-sign mr-1"></i>Fees</button>
+      </div>
+
+      <!-- Subpanel 1: WhatsApp Alerts Queue -->
+      <div id="dpanel-alerts" class="space-y-3">
+        <div id="director-alerts-list" class="space-y-2.5"></div>
+      </div>
+
+      <!-- Subpanel 2: Students Master -->
+      <div id="dpanel-students" class="hidden space-y-3">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+          <div class="flex flex-col sm:flex-row justify-between gap-2">
+            <select id="d-student-grade-filter" onchange="renderDirectorStudents()" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold">
+              <option value="ALL">All Classes / Streams</option>
+              <option value="Class 10">Class 10</option>
+              <option value="Class 9">Class 9</option>
+              <option value="Inter 2nd Year">Inter 2nd Year</option>
+            </select>
+            <input type="text" id="d-student-search" oninput="renderDirectorStudents()" placeholder="Search by student name..." class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs w-full sm:w-60" />
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-100">
+                <tr>
+                  <th class="p-3">Student Name</th>
+                  <th class="p-3">Grade & Stream</th>
+                  <th class="p-3">Primary Contact</th>
+                  <th class="p-3">Status</th>
+                  <th class="p-3 text-right">Dossier</th>
+                </tr>
+              </thead>
+              <tbody id="director-students-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <div id="staff-students-container" class="space-y-2"></div>
-    </section>
-
-  </main>
-
-  <!-- ========================================== -->
-  <!-- 3. MODALS                                  -->
-  <!-- ========================================== -->
-
-  <!-- Modal: Director Register Staff -->
-  <div id="modal-add-staff" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 border border-slate-200 shadow-xl text-xs">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-        <h4 class="font-bold text-slate-900 text-sm">Register Faculty Account</h4>
-        <button onclick="closeModal('modal-add-staff')" class="text-slate-400 hover:text-slate-600 text-base">&times;</button>
+      <!-- Subpanel 3: Staff Attendance -->
+      <div id="dpanel-staff" class="hidden space-y-3">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+          <div class="flex items-center space-x-2 border-b border-slate-100 pb-2">
+            <button onclick="switchStaffSubTab('tutor')" id="stab-tutor" class="px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs">Tutors</button>
+            <button onclick="switchStaffSubTab('teacher')" id="stab-teacher" class="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold text-xs">Teachers</button>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700">
+              <thead class="bg-slate-50 text-slate-400 uppercase text-[10px] font-bold border-b border-slate-100">
+                <tr>
+                  <th class="p-3">Staff Name</th>
+                  <th class="p-3">Monthly Pay</th>
+                  <th class="p-3">Today's Attendance</th>
+                  <th class="p-3 text-right">Work Proof</th>
+                </tr>
+              </thead>
+              <tbody id="director-staff-tbody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+        </div>
       </div>
-      <form onsubmit="handleDirectorCreateFaculty(event)" class="space-y-3">
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">Faculty Full Name</label>
-          <input type="text" id="faculty-name" required placeholder="e.g. Srinivas" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
+
+      <!-- Subpanel 4: Fees -->
+      <div id="dpanel-fees" class="hidden space-y-3">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+          <div class="grid grid-cols-3 gap-2.5 text-center text-xs">
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-slate-400 text-[10px] block">EXPECTED</span><span id="fee-stat-expected" class="text-base font-extrabold text-slate-800">₹0</span></div>
+            <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100"><span class="text-emerald-700 text-[10px] block">COLLECTED</span><span id="fee-stat-collected" class="text-base font-extrabold text-emerald-700">₹0</span></div>
+            <div class="p-3 bg-rose-50 rounded-xl border border-rose-100"><span class="text-rose-700 text-[10px] block">PENDING</span><span id="fee-stat-pending" class="text-base font-extrabold text-rose-700">₹0</span></div>
+          </div>
+          <div id="fees-student-list" class="space-y-2"></div>
         </div>
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">Login Email</label>
-          <input type="email" id="faculty-email" required placeholder="srinivas@tuition.internal" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-        </div>
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">Role</label>
-          <select id="faculty-role" class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white">
-            <option value="Tutor">Campus Tutor (Attendance & Floor)</option>
-            <option value="Teacher">Subject Teacher (Academics & Doubts)</option>
-          </select>
-        </div>
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">Initial Password (Assigned by Director)</label>
-          <input type="text" id="faculty-password" required value="Tuition@2026" class="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono">
-        </div>
-        <button type="submit" class="w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white font-semibold">
-          Save Faculty Profile
-        </button>
-      </form>
+      </div>
     </div>
-  </div>
 
-  <!-- Modal: Director Enroll Student -->
-  <div id="modal-enroll-student" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-sm w-full p-5 space-y-4 border border-slate-200 shadow-xl text-xs">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-        <h4 class="font-bold text-slate-900 text-sm">Enroll New Student</h4>
-        <button onclick="closeModal('modal-enroll-student')" class="text-slate-400 hover:text-slate-600 text-base">&times;</button>
-      </div>
-      <form onsubmit="handleEnrollStudent(event)" class="space-y-3">
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">Student Full Name</label>
-          <input type="text" id="student-name" required placeholder="e.g. M. Sai Tarun" class="w-full px-3 py-2 border border-slate-300 rounded-lg">
-        </div>
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">Grade / Class</label>
-          <select id="student-grade" class="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white">
-            <option value="Class 8">Class 8</option>
+    <!-- TUTOR DESK -->
+    <div id="view-tutor" class="hidden space-y-3">
+      <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex items-center space-x-2">
+          <button onclick="setTutorFilter('ALL')" id="tbtn-all" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold">All Floor</button>
+          <button onclick="setTutorFilter('PRESENT')" id="tbtn-present" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-semibold">Present Only</button>
+          <select id="tutor-grade-filter" onchange="renderTutorCards()" class="px-2.5 py-1.5 rounded-xl border border-slate-200 font-semibold">
+            <option value="ALL">All Grades</option>
+            <option value="Class 10">Class 10</option>
             <option value="Class 9">Class 9</option>
-            <option value="Class 10" selected>Class 10</option>
-            <option value="Inter 1st Year">Inter 1st Year</option>
             <option value="Inter 2nd Year">Inter 2nd Year</option>
-            <option value="B.Tech">B.Tech / Coding</option>
           </select>
         </div>
-        <div>
-          <label class="block font-medium text-slate-700 mb-1">Parent Mobile Number</label>
-          <input type="tel" id="student-phone" required pattern="[0-9]{10}" placeholder="10-digit number" class="w-full px-3 py-2 border border-slate-300 rounded-lg font-mono">
-        </div>
-        <button type="submit" class="w-full py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold">
-          Save Student
+        <button onclick="pushFloorAbsentees()" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold">
+          <i class="fa-solid fa-paper-plane mr-1 text-[11px]"></i>Push Absentees
         </button>
+      </div>
+      <div id="tutor-cards-container" class="space-y-2"></div>
+    </div>
+
+    <!-- TEACHER DESK -->
+    <div id="view-teacher" class="hidden space-y-3">
+      <div class="bg-white p-3.5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between text-xs">
+        <div>
+          <h3 class="font-bold text-slate-900">Teacher Doubt Desk</h3>
+          <p class="text-slate-400 text-[11px]">1-tap topic doubt resolutions</p>
+        </div>
+      </div>
+      <div id="teacher-cards-container" class="space-y-2"></div>
+    </div>
+
+  </main>
+
+  <!-- ==================== 4. STUDENT DOSSIER MODAL ==================== -->
+  <div id="student-modal" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3">
+    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden text-xs">
+      
+      <!-- Top Bar -->
+      <div class="p-4 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between">
+        <div>
+          <div class="flex items-center space-x-2">
+            <h3 id="dossier-name" class="font-extrabold text-base text-slate-900">Student Name</h3>
+            <span id="dossier-grade-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">Class 10</span>
+          </div>
+          <div class="flex items-center space-x-3 text-slate-500 text-[11px] mt-0.5">
+            <span>Primary: <a id="dossier-phone-primary" href="tel:" class="font-mono text-indigo-600 font-bold hover:underline">9391645396</a></span>
+            <span>School: <span id="dossier-school">Bhashyam</span></span>
+          </div>
+        </div>
+        <button onclick="closeModal('student-modal')" class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 flex items-center justify-center font-bold">✕</button>
+      </div>
+
+      <!-- Dossier Tabs -->
+      <div class="flex items-center space-x-2 border-b border-slate-200 px-4 pt-2 text-xs font-bold bg-white overflow-x-auto">
+        <button onclick="switchDossierTab('syllabus')" id="mtab-syllabus" class="py-2 px-3 text-indigo-700 border-b-2 border-indigo-700">Syllabus</button>
+        <button onclick="switchDossierTab('slip-tests')" id="mtab-slip-tests" class="py-2 px-3 text-slate-500 hover:text-slate-800">Slip Test</button>
+        <button onclick="switchDossierTab('weekly-test')" id="mtab-weekly-test" class="py-2 px-3 text-slate-500 hover:text-slate-800">Weekly Test</button>
+        <button onclick="switchDossierTab('exams')" id="mtab-exams" class="py-2 px-3 text-slate-500 hover:text-slate-800">Exams & Delta</button>
+      </div>
+
+      <!-- Dossier Content -->
+      <div class="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
+        <!-- Syllabus -->
+        <div id="mpanel-syllabus" class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Subject Drill-Down</span>
+            <button onclick="promptAddSubject()" class="text-indigo-600 font-bold text-xs">+ Add Subject</button>
+          </div>
+          <div id="dossier-subjects-list" class="flex flex-wrap gap-1.5"></div>
+          <div id="dossier-chapters-list" class="flex flex-wrap gap-1.5 pt-2 border-t border-slate-100"></div>
+          <div id="dossier-subtopics-list" class="space-y-1.5 pt-2 border-t border-slate-100"></div>
+        </div>
+
+        <!-- Slip Test -->
+        <div id="mpanel-slip-tests" class="hidden space-y-3">
+          <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
+            <h4 class="font-bold text-slate-900 text-xs uppercase">Conduct Slip Test</h4>
+            <form onsubmit="handleSaveSlipTest(event)" class="space-y-2.5">
+              <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="st-topic" placeholder="Tested Topic (e.g. Quadratic Roots)" required class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs w-full" />
+                <div class="flex items-center space-x-1">
+                  <input type="number" id="st-score" placeholder="18" required class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs w-full" />
+                  <span>/</span>
+                  <input type="number" id="st-max" placeholder="20" required class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs w-full" />
+                </div>
+              </div>
+              <input type="text" id="st-remarks" placeholder="Remarks" required class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs w-full" />
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-600 mb-1"><i class="fa-solid fa-camera mr-1 text-indigo-600"></i>Attach Answer Sheet Photos</label>
+                <input type="file" multiple accept="image/*" capture="environment" class="text-xs text-slate-400" />
+              </div>
+              <div class="flex justify-end space-x-2 pt-1">
+                <button type="submit" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs">Save Test</button>
+              </div>
+            </form>
+          </div>
+          <div id="dossier-tests-history" class="space-y-2"></div>
+        </div>
+
+        <!-- Weekly Test -->
+        <div id="mpanel-weekly-test" class="hidden space-y-3">
+          <div class="p-3.5 bg-amber-50/70 rounded-2xl border border-amber-200 space-y-2">
+            <h4 class="font-bold text-slate-900 text-xs">Sunday Weekly Test Topics Filter</h4>
+            <div class="flex items-center space-x-2">
+              <input type="date" id="wtest-start" value="2026-09-24" class="px-2 py-1 rounded border border-slate-200 bg-white" />
+              <span class="text-xs text-amber-800 font-bold">to</span>
+              <input type="date" id="wtest-end" value="2026-09-30" class="px-2 py-1 rounded border border-slate-200 bg-white" />
+              <button onclick="filterWeeklyTopics()" class="px-3 py-1 bg-amber-600 text-white rounded font-bold text-xs">Filter</button>
+            </div>
+            <div id="wtest-topics-list" class="space-y-1 pt-1"></div>
+          </div>
+        </div>
+
+        <!-- Exams & Delta -->
+        <div id="mpanel-exams" class="hidden space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">School Exam Countdown</span>
+            <button onclick="promptAddExam()" class="text-rose-600 font-bold text-xs">+ Add Exam</button>
+          </div>
+          <div id="dossier-exam-countdowns" class="space-y-1.5"></div>
+          <h4 class="font-bold text-slate-700 uppercase tracking-wider text-[11px] pt-2 border-t border-slate-100">Marks Delta Progression</h4>
+          <div id="dossier-exam-deltas" class="space-y-1.5"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== 5. ENROLL STUDENT MODAL ==================== -->
+  <div id="enroll-modal" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3">
+    <div class="bg-white rounded-3xl max-w-md w-full p-5 space-y-3 shadow-2xl border border-slate-100 text-xs">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+        <h3 class="font-bold text-slate-900 text-sm">Enroll Student</h3>
+        <button onclick="closeModal('enroll-modal')" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+      </div>
+      <form onsubmit="handleEnrollStudent(event)" class="space-y-2.5">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Student Name *</label>
+          <input type="text" id="en-name" required placeholder="e.g. M. Sai Tarun" class="w-full px-3 py-1.5 rounded-xl border border-slate-200" />
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">School / College *</label>
+            <input type="text" id="en-school" required placeholder="e.g. Bhashyam" class="w-full px-3 py-1.5 rounded-xl border border-slate-200" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Area *</label>
+            <input type="text" id="en-area" required placeholder="e.g. Brodipet" class="w-full px-3 py-1.5 rounded-xl border border-slate-200" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Class *</label>
+            <select id="en-grade" class="w-full px-2 py-1.5 rounded-xl border border-slate-200 bg-white font-semibold">
+              <option value="Class 10">Class 10</option>
+              <option value="Class 9">Class 9</option>
+              <option value="Inter 1st Year">Inter 1st Year</option>
+              <option value="Inter 2nd Year">Inter 2nd Year</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Stream *</label>
+            <input type="text" id="en-stream" value="SSC (State)" class="w-full px-3 py-1.5 rounded-xl border border-slate-200" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Parent Phone *</label>
+            <input type="tel" id="en-phone" pattern="[0-9]{10}" required placeholder="10-digit number" class="w-full px-3 py-1.5 rounded-xl border border-slate-200" />
+          </div>
+          <div>
+            <label class="block font-semibold text-slate-700 mb-1">Monthly Fee (₹) *</label>
+            <input type="number" id="en-fee" value="1500" required class="w-full px-3 py-1.5 rounded-xl border border-slate-200" />
+          </div>
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">Complete Enrollment</button>
       </form>
     </div>
   </div>
 
-  <!-- Toast Notification Bar -->
-  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center space-x-2">
+  <!-- TOAST NOTIFICATION -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs flex items-center space-x-2">
     <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
     <span id="toast-msg">Success</span>
   </div>
 
+  <!-- SCRIPT BUNDLE -->
   <script src="js/config.js"></script>
   <script src="js/app.js"></script>
 </body>

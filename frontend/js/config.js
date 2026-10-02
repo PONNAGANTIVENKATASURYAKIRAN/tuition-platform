@@ -1,13 +1,9 @@
-// Central Free-Tier & White-Label Configuration
 window.APP_CONFIG = {
   institutionName: "Krishna Tuition Institutions",
-  tagline: "Official Academic Supervision & Outbound Communication Portal",
+  tagline: "Internal Staff & Academic Portal",
   directors: [
-    { id: "dir_sir", name: "Director Sir", phone: "8008717360" },
-    { id: "dir_madam", name: "Director Madam", phone: "9848123450" }
+    { id: "dir_sir", label: "Director Sir (+91 8008717360)", phone: "8008717360" },
+    { id: "dir_madam", label: "Director Madam (+91 9848123450)", phone: "9848123450" }
   ],
-  workingDaysPerMonth: 26,
-  apiEndpoint: "https://bg2bytsyll.execute-api.ap-south-1.amazonaws.com",
-  cognitoUserPoolId: "ap-south-1_HRKUg0zJk",
-  awsRegion: "ap-south-1"
+  standardFee: 1500
 };
