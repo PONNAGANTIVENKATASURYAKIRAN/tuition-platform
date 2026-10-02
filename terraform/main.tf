@@ -9,10 +9,6 @@ terraform {
       source  = "hashicorp/archive"
       version = "~> 2.4"
     }
-    random = {
-      source  = "hashicorp/random"
-      version = "~> 3.5"
-    }
   }
 }
 
@@ -21,309 +17,207 @@ provider "aws" {
 }
 
 variable "aws_region" {
-  type        = string
-  default     = "ap-south-1" # Mumbai
-  description = "Target AWS deployment region"
+  type    = string
+  default = "ap-south-1" # Mumbai region
 }
 
-# Generates a unique 6-character hex suffix to guarantee no collisions
-resource "random_id" "suffix" {
-  byte_length = 3
+variable "project_name" {
+  type    = string
+  default = "tuition-platform"
 }
 
-locals {
-  app_prefix = "kt-${random_id.suffix.hex}"
-}
-
-# 1. DynamoDB Single-Table
+# ----------------------------------------------------
+# 1. DynamoDB: Single-Table Architecture (Free-Tier)
+# ----------------------------------------------------
 resource "aws_dynamodb_table" "tuition_table" {
-  name         = "${local.app_prefix}-table"
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "id"
+  name         = "${var.project_name}-data"
+  billing_mode = "PAY_PER_REQUEST" # On-Demand, no idle costs
+  hash_key     = "PK"
+  range_key    = "SK"
 
   attribute {
-    name = "id"
+    name = "PK"
+    type = "S"
+  }
+
+  attribute {
+    name = "SK"
     type = "S"
   }
 
   tags = {
-    Project = "krishna-tuitions"
+    Project     = var.project_name
+    Environment = "production"
   }
 }
 
-# 2. S3 Bucket for Static Web Hosting
-resource "aws_s3_bucket" "frontend_bucket" {
-  bucket        = "${local.app_prefix}-frontend"
+# ----------------------------------------------------
+# 2. S3 Bucket: Multi-Page Slip Test Uploads
+# ----------------------------------------------------
+resource "random_id" "bucket_suffix" {
+  byte_length = 4
+}
+
+resource "aws_s3_bucket" "uploads_bucket" {
+  bucket        = "${var.project_name}-uploads-${random_id.bucket_suffix.hex}"
   force_destroy = true
 
   tags = {
-    Project = "krishna-tuitions"
+    Project = var.project_name
   }
 }
 
-resource "aws_s3_bucket_website_configuration" "frontend_hosting" {
-  bucket = aws_s3_bucket.frontend_bucket.id
+resource "aws_s3_bucket_cors_configuration" "uploads_cors" {
+  bucket = aws_s3_bucket.uploads_bucket.id
 
-  index_document {
-    suffix = "index.html"
+  cors_rule {
+    allowed_headers = ["*"]
+    allowed_methods = ["PUT", "POST", "GET"]
+    allowed_origins = ["*"]
+    max_age_seconds = 3000
   }
 }
 
-resource "aws_s3_bucket_public_access_block" "public_access" {
-  bucket                  = aws_s3_bucket.frontend_bucket.id
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-resource "aws_s3_bucket_policy" "frontend_policy" {
-  depends_on = [aws_s3_bucket_public_access_block.public_access]
-  bucket     = aws_s3_bucket.frontend_bucket.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "PublicReadGetObject"
-        Effect    = "Allow"
-        Principal = "*"
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.frontend_bucket.arn}/*"
-      }
-    ]
-  })
-}
-
-# 3. AWS CloudFront Distribution (Edge CDN - Free 1TB/mo)
-resource "aws_cloudfront_distribution" "s3_distribution" {
-  origin {
-    domain_name = aws_s3_bucket_website_configuration.frontend_hosting.website_endpoint
-    origin_id   = "S3-${aws_s3_bucket.frontend_bucket.id}"
-
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "http-only"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
-  }
-
-  enabled             = true
-  is_ipv6_enabled     = true
-  default_root_object = "index.html"
-
-  default_cache_behavior {
-    allowed_methods  = ["GET", "HEAD", "OPTIONS"]
-    cached_methods   = ["GET", "HEAD"]
-    target_origin_id = "S3-${aws_s3_bucket.frontend_bucket.id}"
-
-    forwarded_values {
-      query_string = false
-      cookies {
-        forward = "none"
-      }
-    }
-
-    viewer_protocol_policy = "redirect-to-https"
-    min_ttl                = 0
-    default_ttl            = 3600
-    max_ttl                = 86400
-  }
-
-  restrictions {
-    geo_restriction {
-      restriction_type = "none"
-    }
-  }
-
-  viewer_certificate {
-    cloudfront_default_certificate = true
-  }
-
-  tags = {
-    Project = "krishna-tuitions"
-  }
-}
-
-# 4. Amazon Cognito User Pool (Free 50k MAUs)
-resource "aws_cognito_user_pool" "pool" {
-  name = "${local.app_prefix}-user-pool"
-
-  admin_create_user_config {
-    allow_admin_create_user_only = false
-  }
-
-  auto_verified_attributes = ["email"]
-
-  tags = {
-    Project = "krishna-tuitions"
-  }
-}
-
-resource "aws_cognito_user_pool_client" "client" {
-  name         = "${local.app_prefix}-client"
-  user_pool_id = aws_cognito_user_pool.pool.id
-
-  generate_secret = false
-  explicit_auth_flows = [
-    "ALLOW_USER_PASSWORD_AUTH",
-    "ALLOW_REFRESH_TOKEN_AUTH",
-    "ALLOW_USER_SRP_AUTH"
-  ]
-}
-
-# 5. IAM Role & Policy for Lambda Microservice
+# ----------------------------------------------------
+# 3. IAM: Execution Role for Lambda Function
+# ----------------------------------------------------
 resource "aws_iam_role" "lambda_exec_role" {
-  name = "${local.app_prefix}-lambda-role"
+  name = "${var.project_name}-lambda-exec"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "lambda.amazonaws.com"
       }
-    ]
+    }]
   })
 }
 
 resource "aws_iam_policy" "lambda_policy" {
-  name        = "${local.app_prefix}-lambda-policy"
-  description = "Allows Lambda access to DynamoDB, CloudWatch, and Bedrock"
+  name = "${var.project_name}-lambda-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
+        Effect = "Allow"
         Action = [
-          "dynamodb:Scan",
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:UpdateItem",
-          "dynamodb:DeleteItem"
+          "dynamodb:DeleteItem",
+          "dynamodb:Query",
+          "dynamodb:Scan"
         ]
-        Effect   = "Allow"
         Resource = aws_dynamodb_table.tuition_table.arn
       },
       {
+        Effect = "Allow"
         Action = [
-          "bedrock:InvokeModel"
+          "s3:PutObject",
+          "s3:GetObject"
         ]
-        Effect   = "Allow"
-        Resource = "*"
+        Resource = "${aws_s3_bucket.uploads_bucket.arn}/*"
       },
       {
+        Effect = "Allow"
         Action = [
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents"
         ]
-        Effect   = "Allow"
         Resource = "arn:aws:logs:*:*:*"
       }
     ]
   })
 }
 
-resource "aws_iam_role_policy_attachment" "lambda_attach" {
+resource "aws_iam_role_policy_attachment" "lambda_policy_attach" {
   role       = aws_iam_role.lambda_exec_role.name
   policy_arn = aws_iam_policy.lambda_policy.arn
 }
 
-# 6. Package Lambda Python Handler
+# ----------------------------------------------------
+# 4. Packaging the Python Lambda Handler
+# ----------------------------------------------------
 data "archive_file" "lambda_zip" {
   type        = "zip"
   source_file = "${path.module}/../backend/lambda_handler.py"
   output_path = "${path.module}/lambda_payload.zip"
 }
 
-# 7. Lambda Function
-resource "aws_lambda_function" "tuition_backend" {
-  function_name    = "${local.app_prefix}-backend"
+resource "aws_lambda_function" "api_backend" {
   filename         = data.archive_file.lambda_zip.output_path
-  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
+  function_name    = "${var.project_name}-api"
   role             = aws_iam_role.lambda_exec_role.arn
-  handler          = "lambda_handler.lambda_handler"
+  handler          = "lambda_handler.handler"
   runtime          = "python3.12"
+  source_code_hash = data.archive_file.lambda_zip.output_base64sha256
   timeout          = 15
 
   environment {
     variables = {
-      TABLE_NAME = aws_dynamodb_table.tuition_table.name
+      TABLE_NAME  = aws_dynamodb_table.tuition_table.name
+      BUCKET_NAME = aws_s3_bucket.uploads_bucket.bucket
     }
-  }
-
-  tags = {
-    Project = "krishna-tuitions"
   }
 }
 
-# 8. HTTP API Gateway v2
+# ----------------------------------------------------
+# 5. API Gateway: HTTP API Integration (v2)
+# ----------------------------------------------------
 resource "aws_apigatewayv2_api" "http_api" {
-  name          = "${local.app_prefix}-api"
+  name          = "${var.project_name}-http-api"
   protocol_type = "HTTP"
 
   cors_configuration {
     allow_origins = ["*"]
-    allow_methods = ["GET", "POST", "PUT", "OPTIONS", "DELETE"]
-    allow_headers = ["Content-Type", "Authorization"]
-    max_age       = 300
+    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_headers = ["*"]
   }
 }
 
-resource "aws_apigatewayv2_integration" "lambda_integration" {
-  api_id                 = aws_apigatewayv2_api.http_api.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.tuition_backend.arn
-  payload_format_version = "2.0"
-}
-
-resource "aws_apigatewayv2_route" "students_route" {
-  api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "ANY /students"
-  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
-}
-
-resource "aws_apigatewayv2_stage" "default_stage" {
+resource "aws_apigatewayv2_stage" "api_stage" {
   api_id      = aws_apigatewayv2_api.http_api.id
   name        = "$default"
   auto_deploy = true
 }
 
+resource "aws_apigatewayv2_integration" "lambda_integration" {
+  api_id           = aws_apigatewayv2_api.http_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.api_backend.invoke_arn
+}
+
+resource "aws_apigatewayv2_route" "default_route" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "$default"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda_integration.id}"
+}
+
 resource "aws_lambda_permission" "api_gw_permission" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.tuition_backend.function_name
+  function_name = aws_lambda_function.api_backend.function_name
   principal     = "apigateway.amazonaws.com"
   source_arn    = "${aws_apigatewayv2_api.http_api.execution_arn}/*/*"
 }
 
-# Outputs
-output "cloudfront_url" {
-  description = "Fast Global CloudFront CDN Web Endpoint"
-  value       = "https://${aws_cloudfront_distribution.s3_distribution.domain_name}"
-}
-
-output "s3_website_url" {
-  description = "Direct S3 Website Endpoint"
-  value       = "http://${aws_s3_bucket_website_configuration.frontend_hosting.website_endpoint}"
-}
-
-output "s3_bucket_name" {
-  description = "Target S3 Bucket Name for Frontend"
-  value       = aws_s3_bucket.frontend_bucket.bucket
-}
-
+# ----------------------------------------------------
+# 6. Outputs
+# ----------------------------------------------------
 output "api_endpoint" {
-  description = "Backend REST API Base URL"
+  description = "Base URL for the frontend to call"
   value       = aws_apigatewayv2_api.http_api.api_endpoint
 }
 
-output "cognito_user_pool_id" {
-  description = "Cognito User Pool ID"
-  value       = aws_cognito_user_pool.pool.id
+output "dynamodb_table_name" {
+  value = aws_dynamodb_table.tuition_table.name
+}
+
+output "s3_bucket_name" {
+  value = aws_s3_bucket.uploads_bucket.bucket
 }

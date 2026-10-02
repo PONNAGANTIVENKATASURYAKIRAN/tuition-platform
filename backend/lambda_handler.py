@@ -1,66 +1,94 @@
-"""AWS Lambda microservice for Tuition Platform backend."""
-
 import json
 import os
-from decimal import Decimal
 
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
 
+# Read environment variables injected by Terraform
+TABLE_NAME = os.environ.get("TABLE_NAME")
+BUCKET_NAME = os.environ.get("BUCKET_NAME")
 
-# Custom JSON encoder to handle DynamoDB Decimal types
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Decimal):
-            return int(obj) if obj % 1 == 0 else float(obj)
-        return super().default(obj)
-
-
-# AWS DynamoDB Resource setup
 dynamodb = boto3.resource("dynamodb")
-TABLE_NAME = os.environ.get("TABLE_NAME", "krishna-tuition-table")
-table = dynamodb.Table(TABLE_NAME)
+table = dynamodb.Table(TABLE_NAME) if TABLE_NAME else None
+s3_client = boto3.client("s3")
 
 
-def build_response(status_code, body):
-    """Return standard API Gateway proxy response with CORS enabled."""
+def make_response(status_code, body):
+    """Utility function to format standardized HTTP responses with CORS."""
     return {
         "statusCode": status_code,
         "headers": {
-            "Access-Control-Allow-Origin": "*",
-            "Access-Control-Allow-Headers": "Content-Type,Authorization",
-            "Access-Control-Allow-Methods": "OPTIONS,GET,POST,PUT,DELETE",
             "Content-Type": "application/json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
+            "Access-Control-Allow-Headers": "*",
         },
-        "body": json.dumps(body, cls=DecimalEncoder),
+        "body": json.dumps(body),
     }
 
 
-def lambda_handler(event, _context):
-    """Main Lambda entry point triggered by API Gateway."""
-    http_method = event.get("httpMethod", "")
+def handler(event, context):
+    """
+    Main entry point for API Gateway requests.
+    Routes requests by HTTP method and path.
+    """
+    http_method = event.get("requestContext", {}).get("http", {}).get("method", "GET")
+    raw_path = event.get("rawPath", "/")
 
+    # Handle Preflight OPTIONS requests for CORS
     if http_method == "OPTIONS":
-        return build_response(200, {"message": "CORS preflight successful"})
+        return make_response(200, {"message": "CORS preflight OK"})
 
     try:
-        if http_method == "GET":
+        # Route 1: Health check
+        if raw_path == "/health" or raw_path == "/":
+            return make_response(
+                200,
+                {
+                    "status": "online",
+                    "service": "tuition-platform-api",
+                    "table": TABLE_NAME,
+                },
+            )
+
+        # Route 2: Get all students
+        if raw_path == "/students" and http_method == "GET":
             response = table.scan()
             items = response.get("Items", [])
-            return build_response(200, {"students": items})
+            return make_response(200, items)
 
-        if http_method in ("POST", "PUT"):
-            payload = json.loads(event.get("body", "{}"))
-            student_id = payload.get("id")
-
+        # Route 3: Enroll / Upsert student
+        if raw_path == "/students" and http_method == "POST":
+            body = json.loads(event.get("body", "{}"))
+            student_id = body.get("id")
             if not student_id:
-                return build_response(400, {"error": "Missing student ID"})
+                return make_response(400, {"error": "Missing student ID"})
 
-            table.put_item(Item=payload)
-            msg = "Student registered" if http_method == "POST" else "Record updated"
-            return build_response(200, {"message": msg, "student": payload})
+            item = {"PK": f"STUDENT#{student_id}", "SK": "METADATA", **body}
+            table.put_item(Item=item)
+            return make_response(
+                201, {"message": "Student record saved successfully", "student": item}
+            )
 
-        return build_response(405, {"error": f"Method {http_method} not allowed"})
+        # Route 4: Generate S3 Presigned URL for camera answer sheet uploads
+        if raw_path == "/uploads/presign" and http_method == "POST":
+            body = json.loads(event.get("body", "{}"))
+            file_name = body.get("fileName", "test_paper.jpg")
 
-    except (ClientError, BotoCoreError, json.JSONDecodeError) as err:
-        return build_response(500, {"error": str(err)})
+            presigned_url = s3_client.generate_presigned_url(
+                "put_object",
+                Params={"Bucket": BUCKET_NAME, "Key": f"tests/{file_name}"},
+                ExpiresIn=300,
+            )
+            return make_response(
+                200, {"uploadUrl": presigned_url, "fileKey": f"tests/{file_name}"}
+            )
+
+        # Fallback 404
+        return make_response(
+            404, {"error": f"Route not found: {http_method} {raw_path}"}
+        )
+
+    except (BotoCoreError, ClientError, KeyError, TypeError, ValueError) as e:
+        print(f"Error handling request: {e!s}")
+        return make_response(500, {"error": "Internal server error", "details": str(e)})
