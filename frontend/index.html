@@ -6,7 +6,7 @@
   <title>Tuition Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
@@ -16,56 +16,48 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- ==================== 1. INTERNAL AUTH OVERLAY ==================== -->
+  <!-- 1. INTERNAL AUTH OVERLAY -->
   <div id="login-modal" class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
-    <div class="bg-white max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-5 animate-in fade-in zoom-in-95 duration-200">
-      
-      <!-- Brand Crest -->
+    <div class="bg-white max-w-sm w-full rounded-3xl p-6 shadow-2xl border border-slate-100 space-y-5">
       <div class="text-center space-y-1.5">
-        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white mx-auto flex items-center justify-center text-xl shadow-lg shadow-indigo-200">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white mx-auto flex items-center justify-center text-xl shadow-md">
           <i class="fa-solid fa-graduation-cap"></i>
         </div>
         <h2 id="login-brand-title" class="font-extrabold text-slate-900 text-lg tracking-tight">Krishna Tuition Institutions</h2>
         <p class="text-[12px] text-slate-500 font-medium">Internal Staff Desk</p>
       </div>
 
-      <!-- Quick Role Selection -->
       <div class="space-y-1.5">
         <label class="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">Access Role</label>
         <div class="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 rounded-xl text-xs font-bold">
-          <button type="button" onclick="selectLoginRole('director')" id="role-pill-director" class="py-2 rounded-lg bg-white text-indigo-700 shadow-sm transition">Director</button>
-          <button type="button" onclick="selectLoginRole('tutor')" id="role-pill-tutor" class="py-2 rounded-lg text-slate-600 hover:text-slate-900 transition">Tutor</button>
-          <button type="button" onclick="selectLoginRole('teacher')" id="role-pill-teacher" class="py-2 rounded-lg text-slate-600 hover:text-slate-900 transition">Teacher</button>
+          <button type="button" onclick="selectLoginRole('director')" id="role-pill-director" class="py-2 rounded-lg bg-white text-indigo-700 shadow-sm">Director</button>
+          <button type="button" onclick="selectLoginRole('tutor')" id="role-pill-tutor" class="py-2 rounded-lg text-slate-600">Tutor</button>
+          <button type="button" onclick="selectLoginRole('teacher')" id="role-pill-teacher" class="py-2 rounded-lg text-slate-600">Teacher</button>
         </div>
       </div>
 
-      <!-- Credentials Form -->
       <form onsubmit="handleStaffLogin(event)" class="space-y-3">
         <div>
           <label class="text-[11px] font-bold text-slate-600 mb-1 block">Staff Phone / ID</label>
-          <input type="text" id="login-username" required placeholder="Registered Mobile Number" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+          <input type="text" id="login-username" required placeholder="Registered Mobile Number" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" />
         </div>
         <div>
           <label class="text-[11px] font-bold text-slate-600 mb-1 block">PIN / Password</label>
-          <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50/50 text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition" />
+          <input type="password" id="login-password" required placeholder="••••••••" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 text-xs focus:ring-2 focus:ring-indigo-500 outline-none" />
         </div>
-
-        <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs shadow-md shadow-indigo-100 transition active:scale-95">
+        <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs transition">
           Enter Floor Desk
         </button>
       </form>
-
       <div class="text-center">
         <span class="text-[11px] text-slate-400 font-mono">Secured with AWS Cognito RBAC</span>
       </div>
     </div>
   </div>
 
-  <!-- ==================== 2. MAIN APP NAVIGATION ==================== -->
+  <!-- 2. MAIN APP NAVIGATION -->
   <header class="bg-white border-b border-slate-200/80 sticky top-0 z-30">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-      
-      <!-- Brand & Status -->
       <div class="flex items-center space-x-3">
         <div class="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-sm">
           <i class="fa-solid fa-graduation-cap"></i>
@@ -78,24 +70,21 @@
         </div>
       </div>
 
-      <!-- Quick Switcher & Logout -->
       <div class="flex items-center space-x-2">
         <div class="hidden sm:flex items-center bg-slate-100 p-1 rounded-xl text-xs font-semibold">
           <button id="nav-btn-director" onclick="switchRole('director')" class="px-3 py-1.5 rounded-lg bg-white text-indigo-700 shadow-sm">Director</button>
           <button id="nav-btn-tutor" onclick="switchRole('tutor')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">Tutor</button>
           <button id="nav-btn-teacher" onclick="switchRole('teacher')" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900">Teacher</button>
         </div>
-        <button onclick="logoutStaff()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 text-slate-500 flex items-center justify-center transition" title="Log out">
+        <button onclick="logoutStaff()" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-rose-50 hover:text-rose-600 flex items-center justify-center text-slate-500 transition">
           <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
         </button>
       </div>
-
     </div>
   </header>
 
-  <!-- ==================== 3. MAIN WORKSPACE ==================== -->
+  <!-- 3. MAIN WORKSPACE -->
   <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-5 space-y-4">
-
     <!-- DIRECTOR CONSOLE -->
     <div id="view-director" class="space-y-4">
       <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -103,44 +92,48 @@
           <h2 class="text-sm font-bold text-slate-900">Director Control Desk</h2>
           <p class="text-xs text-slate-500">Official dispatch, faculty attendance, and student operations.</p>
         </div>
-        <!-- Dual Director Selector -->
         <div class="flex items-center space-x-2">
           <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs">
             <i class="fa-brands fa-whatsapp text-emerald-600 mr-2 text-sm"></i>
-            <select id="director-active-sender" class="bg-transparent font-bold text-slate-800 text-xs focus:outline-none cursor-pointer">
-              <!-- Populated from config -->
-            </select>
+            <select id="director-active-sender" class="bg-transparent font-bold text-slate-800 text-xs focus:outline-none"></select>
           </div>
-          <button onclick="openEnrollModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs flex items-center space-x-1.5 shadow-sm">
+          <button onclick="openEnrollModal()" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-xs flex items-center space-x-1.5 transition">
             <i class="fa-solid fa-user-plus text-[11px]"></i><span>Enroll Student</span>
           </button>
         </div>
       </div>
 
-      <!-- Navigation Tabs -->
       <div class="flex items-center space-x-2 border-b border-slate-200 text-xs font-bold overflow-x-auto">
-        <button onclick="switchDirectorTab('alerts')" id="dtab-alerts" class="px-3 py-2 text-indigo-700 border-b-2 border-indigo-700 whitespace-nowrap"><i class="fa-brands fa-whatsapp mr-1"></i>WhatsApp Alerts (<span id="d-badge-alerts">0</span>)</button>
-        <button onclick="switchDirectorTab('students')" id="dtab-students" class="px-3 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap"><i class="fa-solid fa-users mr-1"></i>Students (<span id="d-badge-students">0</span>)</button>
-        <button onclick="switchDirectorTab('staff')" id="dtab-staff" class="px-3 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap"><i class="fa-solid fa-user-tie mr-1"></i>Staff Attendance</button>
-        <button onclick="switchDirectorTab('fees')" id="dtab-fees" class="px-3 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap"><i class="fa-solid fa-indian-rupee-sign mr-1"></i>Fees</button>
+        <button onclick="switchDirectorTab('alerts')" id="dtab-alerts" class="px-3 py-2 text-indigo-700 border-b-2 border-indigo-700 whitespace-nowrap">
+          WhatsApp Alerts (<span id="d-badge-alerts">0</span>)
+        </button>
+        <button onclick="switchDirectorTab('students')" id="dtab-students" class="px-3 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap">
+          Students (<span id="d-badge-students">0</span>)
+        </button>
+        <button onclick="switchDirectorTab('staff')" id="dtab-staff" class="px-3 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap">
+          Staff Attendance
+        </button>
+        <button onclick="switchDirectorTab('fees')" id="dtab-fees" class="px-3 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap">
+          Fees Ledger
+        </button>
       </div>
 
-      <!-- Subpanel 1: WhatsApp Alerts Queue -->
+      <!-- Tab 1: WhatsApp Alerts -->
       <div id="dpanel-alerts" class="space-y-3">
         <div id="director-alerts-list" class="space-y-2.5"></div>
       </div>
 
-      <!-- Subpanel 2: Students Master -->
+      <!-- Tab 2: Students Master -->
       <div id="dpanel-students" class="hidden space-y-3">
         <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
           <div class="flex flex-col sm:flex-row justify-between gap-2">
-            <select id="d-student-grade-filter" onchange="renderDirectorStudents()" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs font-semibold">
+            <select id="d-student-grade-filter" onchange="renderDirectorStudents()" class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs bg-white font-semibold">
               <option value="ALL">All Classes / Streams</option>
               <option value="Class 10">Class 10</option>
               <option value="Class 9">Class 9</option>
               <option value="Inter 2nd Year">Inter 2nd Year</option>
             </select>
-            <input type="text" id="d-student-search" oninput="renderDirectorStudents()" placeholder="Search by student name..." class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs w-full sm:w-60" />
+            <input type="text" id="d-student-search" oninput="renderDirectorStudents()" placeholder="Search by student name..." class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs" />
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-slate-700">
@@ -159,12 +152,12 @@
         </div>
       </div>
 
-      <!-- Subpanel 3: Staff Attendance -->
+      <!-- Tab 3: Staff Attendance -->
       <div id="dpanel-staff" class="hidden space-y-3">
         <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
           <div class="flex items-center space-x-2 border-b border-slate-100 pb-2">
-            <button onclick="switchStaffSubTab('tutor')" id="stab-tutor" class="px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs">Tutors</button>
-            <button onclick="switchStaffSubTab('teacher')" id="stab-teacher" class="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold text-xs">Teachers</button>
+            <button onclick="switchStaffSubTab('tutor')" id="stab-tutor" class="px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs">Floor Tutors</button>
+            <button onclick="switchStaffSubTab('teacher')" id="stab-teacher" class="px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold text-xs">Subject Teachers</button>
           </div>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs text-slate-700">
@@ -182,13 +175,22 @@
         </div>
       </div>
 
-      <!-- Subpanel 4: Fees -->
+      <!-- Tab 4: Fees -->
       <div id="dpanel-fees" class="hidden space-y-3">
         <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
           <div class="grid grid-cols-3 gap-2.5 text-center text-xs">
-            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100"><span class="text-slate-400 text-[10px] block">EXPECTED</span><span id="fee-stat-expected" class="text-base font-extrabold text-slate-800">₹0</span></div>
-            <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100"><span class="text-emerald-700 text-[10px] block">COLLECTED</span><span id="fee-stat-collected" class="text-base font-extrabold text-emerald-700">₹0</span></div>
-            <div class="p-3 bg-rose-50 rounded-xl border border-rose-100"><span class="text-rose-700 text-[10px] block">PENDING</span><span id="fee-stat-pending" class="text-base font-extrabold text-rose-700">₹0</span></div>
+            <div class="p-3 bg-slate-50 rounded-xl border border-slate-100">
+              <span class="text-slate-400 text-[10px] block uppercase font-bold">Expected</span>
+              <span id="fee-stat-expected" class="font-bold text-slate-800 text-base font-mono">₹0</span>
+            </div>
+            <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-100">
+              <span class="text-emerald-700 text-[10px] block uppercase font-bold">Collected</span>
+              <span id="fee-stat-collected" class="font-bold text-emerald-700 text-base font-mono">₹0</span>
+            </div>
+            <div class="p-3 bg-rose-50 rounded-xl border border-rose-100">
+              <span class="text-rose-700 text-[10px] block uppercase font-bold">Pending</span>
+              <span id="fee-stat-pending" class="font-bold text-rose-700 text-base font-mono">₹0</span>
+            </div>
           </div>
           <div id="fees-student-list" class="space-y-2"></div>
         </div>
@@ -197,18 +199,18 @@
 
     <!-- TUTOR DESK -->
     <div id="view-tutor" class="hidden space-y-3">
-      <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2 text-xs">
+      <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center space-x-2">
-          <button onclick="setTutorFilter('ALL')" id="tbtn-all" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold">All Floor</button>
-          <button onclick="setTutorFilter('PRESENT')" id="tbtn-present" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-semibold">Present Only</button>
-          <select id="tutor-grade-filter" onchange="renderTutorCards()" class="px-2.5 py-1.5 rounded-xl border border-slate-200 font-semibold">
+          <button onclick="setTutorFilter('ALL')" id="tbtn-all" class="px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold text-xs">All Students</button>
+          <button onclick="setTutorFilter('PRESENT')" id="tbtn-present" class="px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-semibold text-xs">Present Only</button>
+          <select id="tutor-grade-filter" onchange="renderTutorCards()" class="px-2.5 py-1.5 rounded-xl border border-slate-200 text-xs bg-white font-semibold">
             <option value="ALL">All Grades</option>
             <option value="Class 10">Class 10</option>
             <option value="Class 9">Class 9</option>
             <option value="Inter 2nd Year">Inter 2nd Year</option>
           </select>
         </div>
-        <button onclick="pushFloorAbsentees()" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold">
+        <button onclick="pushFloorAbsentees()" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center">
           <i class="fa-solid fa-paper-plane mr-1 text-[11px]"></i>Push Absentees
         </button>
       </div>
@@ -225,14 +227,11 @@
       </div>
       <div id="teacher-cards-container" class="space-y-2"></div>
     </div>
-
   </main>
 
-  <!-- ==================== 4. STUDENT DOSSIER MODAL ==================== -->
-  <div id="student-modal" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3">
-    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden text-xs">
-      
-      <!-- Top Bar -->
+  <!-- 4. STUDENT DOSSIER MODAL -->
+  <div id="student-modal" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl border border-slate-100 overflow-hidden">
       <div class="p-4 bg-slate-50 border-b border-slate-200/80 flex items-center justify-between">
         <div>
           <div class="flex items-center space-x-2">
@@ -240,24 +239,21 @@
             <span id="dossier-grade-badge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-indigo-700">Class 10</span>
           </div>
           <div class="flex items-center space-x-3 text-slate-500 text-[11px] mt-0.5">
-            <span>Primary: <a id="dossier-phone-primary" href="tel:" class="font-mono text-indigo-600 font-bold hover:underline">9391645396</a></span>
+            <span>Primary: <a id="dossier-phone-primary" href="tel:" class="font-mono text-indigo-600 font-bold hover:underline"></a></span>
             <span>School: <span id="dossier-school">Bhashyam</span></span>
           </div>
         </div>
-        <button onclick="closeModal('student-modal')" class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 flex items-center justify-center font-bold">✕</button>
+        <button onclick="closeModal('student-modal')" class="w-8 h-8 rounded-full bg-slate-200 text-slate-600 hover:bg-slate-300 flex items-center justify-center text-xs font-bold">✕</button>
       </div>
 
-      <!-- Dossier Tabs -->
       <div class="flex items-center space-x-2 border-b border-slate-200 px-4 pt-2 text-xs font-bold bg-white overflow-x-auto">
         <button onclick="switchDossierTab('syllabus')" id="mtab-syllabus" class="py-2 px-3 text-indigo-700 border-b-2 border-indigo-700">Syllabus</button>
-        <button onclick="switchDossierTab('slip-tests')" id="mtab-slip-tests" class="py-2 px-3 text-slate-500 hover:text-slate-800">Slip Test</button>
-        <button onclick="switchDossierTab('weekly-test')" id="mtab-weekly-test" class="py-2 px-3 text-slate-500 hover:text-slate-800">Weekly Test</button>
-        <button onclick="switchDossierTab('exams')" id="mtab-exams" class="py-2 px-3 text-slate-500 hover:text-slate-800">Exams & Delta</button>
+        <button onclick="switchDossierTab('slip-tests')" id="mtab-slip-tests" class="py-2 px-3 text-slate-500 hover:text-slate-800">Slip Tests</button>
+        <button onclick="switchDossierTab('exams')" id="mtab-exams" class="py-2 px-3 text-slate-500 hover:text-slate-800">Exams</button>
       </div>
 
-      <!-- Dossier Content -->
       <div class="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1">
-        <!-- Syllabus -->
+        <!-- Syllabus Subpanel -->
         <div id="mpanel-syllabus" class="space-y-3">
           <div class="flex items-center justify-between">
             <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">Subject Drill-Down</span>
@@ -268,63 +264,44 @@
           <div id="dossier-subtopics-list" class="space-y-1.5 pt-2 border-t border-slate-100"></div>
         </div>
 
-        <!-- Slip Test -->
+        <!-- Slip Test Subpanel -->
         <div id="mpanel-slip-tests" class="hidden space-y-3">
           <div class="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 space-y-2.5">
             <h4 class="font-bold text-slate-900 text-xs uppercase">Conduct Slip Test</h4>
             <form onsubmit="handleSaveSlipTest(event)" class="space-y-2.5">
               <div class="grid grid-cols-2 gap-2">
-                <input type="text" id="st-topic" placeholder="Tested Topic (e.g. Quadratic Roots)" required class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs w-full" />
+                <input type="text" id="st-topic" placeholder="Tested Topic (e.g. Quadratic Roots)" required class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs" />
                 <div class="flex items-center space-x-1">
                   <input type="number" id="st-score" placeholder="18" required class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs w-full" />
                   <span>/</span>
                   <input type="number" id="st-max" placeholder="20" required class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs w-full" />
                 </div>
               </div>
-              <input type="text" id="st-remarks" placeholder="Remarks" required class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs w-full" />
-              <div>
-                <label class="block text-[11px] font-semibold text-slate-600 mb-1"><i class="fa-solid fa-camera mr-1 text-indigo-600"></i>Attach Answer Sheet Photos</label>
-                <input type="file" multiple accept="image/*" capture="environment" class="text-xs text-slate-400" />
-              </div>
-              <div class="flex justify-end space-x-2 pt-1">
-                <button type="submit" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs">Save Test</button>
+              <input type="text" id="st-remarks" placeholder="Remarks (e.g. Clean presentation)" required class="px-3 py-1.5 rounded-xl border border-slate-200 text-xs w-full" />
+              <div class="flex justify-end pt-1">
+                <button type="submit" class="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs">Save Result</button>
               </div>
             </form>
           </div>
           <div id="dossier-tests-history" class="space-y-2"></div>
         </div>
 
-        <!-- Weekly Test -->
-        <div id="mpanel-weekly-test" class="hidden space-y-3">
-          <div class="p-3.5 bg-amber-50/70 rounded-2xl border border-amber-200 space-y-2">
-            <h4 class="font-bold text-slate-900 text-xs">Sunday Weekly Test Topics Filter</h4>
-            <div class="flex items-center space-x-2">
-              <input type="date" id="wtest-start" value="2026-09-24" class="px-2 py-1 rounded border border-slate-200 bg-white" />
-              <span class="text-xs text-amber-800 font-bold">to</span>
-              <input type="date" id="wtest-end" value="2026-09-30" class="px-2 py-1 rounded border border-slate-200 bg-white" />
-              <button onclick="filterWeeklyTopics()" class="px-3 py-1 bg-amber-600 text-white rounded font-bold text-xs">Filter</button>
-            </div>
-            <div id="wtest-topics-list" class="space-y-1 pt-1"></div>
-          </div>
-        </div>
-
-        <!-- Exams & Delta -->
+        <!-- Exams Subpanel -->
         <div id="mpanel-exams" class="hidden space-y-3">
           <div class="flex items-center justify-between">
             <span class="font-bold text-slate-700 uppercase tracking-wider text-[11px]">School Exam Countdown</span>
             <button onclick="promptAddExam()" class="text-rose-600 font-bold text-xs">+ Add Exam</button>
           </div>
           <div id="dossier-exam-countdowns" class="space-y-1.5"></div>
-          <h4 class="font-bold text-slate-700 uppercase tracking-wider text-[11px] pt-2 border-t border-slate-100">Marks Delta Progression</h4>
+          <h4 class="font-bold text-slate-700 uppercase tracking-wider text-[11px] pt-2 border-t border-slate-100">Marks History</h4>
           <div id="dossier-exam-deltas" class="space-y-1.5"></div>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- ==================== 5. ENROLL STUDENT MODAL ==================== -->
-  <div id="enroll-modal" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-3">
+  <!-- 5. ENROLL STUDENT MODAL -->
+  <div id="enroll-modal" class="hidden fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-5 space-y-3 shadow-2xl border border-slate-100 text-xs">
       <div class="flex items-center justify-between border-b border-slate-100 pb-2">
         <h3 class="font-bold text-slate-900 text-sm">Enroll Student</h3>
@@ -370,13 +347,15 @@
             <input type="number" id="en-fee" value="1500" required class="w-full px-3 py-1.5 rounded-xl border border-slate-200" />
           </div>
         </div>
-        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md">Complete Enrollment</button>
+        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl transition">
+          Complete Enrollment
+        </button>
       </form>
     </div>
   </div>
 
   <!-- TOAST NOTIFICATION -->
-  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs flex items-center space-x-2">
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-24 opacity-0 transition-all duration-300 flex items-center space-x-2 bg-slate-900 text-white px-4 py-2.5 rounded-2xl shadow-xl text-xs font-semibold">
     <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400"></i>
     <span id="toast-msg">Success</span>
   </div>

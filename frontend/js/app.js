@@ -1,4 +1,6 @@
-/* Data Models & Core State */
+/* ==========================================================================
+   State & Working Models
+   ========================================================================== */
 let currentRole = "director";
 let activeDirectorTab = "alerts";
 let activeDossierTab = "syllabus";
@@ -69,30 +71,61 @@ let alerts = [
     studentName: "K. Bhavya",
     grade: "Class 9",
     phone: "9848099887",
-    text: "Dear Parents, Warm greetings from Krishna Tuition Institutions. We noticed your ward K. Bhavya (Class 9) is absent for today's session. Please coordinate with us safely."
+    text: "Dear Parents, Warm greetings from Krishna Tuition Institutions. We noticed your ward K. Bhavya (Class 9) was absent today."
   }
 ];
 
-/* Initialization */
-window.onload = function() {
+/* ==========================================================================
+   Initialization & Live DynamoDB Fetching
+   ========================================================================== */
+window.onload = async function () {
   if (window.APP_CONFIG) {
-    document.getElementById("login-brand-title").textContent = window.APP_CONFIG.institutionName;
-    document.getElementById("app-brand-title").textContent = window.APP_CONFIG.institutionName;
+    const loginTitle = document.getElementById("login-brand-title");
+    const appTitle = document.getElementById("app-brand-title");
+    if (loginTitle) loginTitle.textContent = window.APP_CONFIG.institutionName;
+    if (appTitle) appTitle.textContent = window.APP_CONFIG.institutionName;
+
     const senderSelect = document.getElementById("director-active-sender");
-    senderSelect.innerHTML = "";
-    window.APP_CONFIG.directors.forEach(d => {
-      const opt = document.createElement("option");
-      opt.value = d.phone;
-      opt.textContent = d.label;
-      senderSelect.appendChild(opt);
-    });
+    if (senderSelect) {
+      senderSelect.innerHTML = "";
+      window.APP_CONFIG.directors.forEach(d => {
+        const opt = document.createElement("option");
+        opt.value = d.phone;
+        opt.textContent = d.label;
+        senderSelect.appendChild(opt);
+      });
+    }
   }
+
+  // Fetch live student records from AWS Lambda & DynamoDB
+  try {
+    const res = await fetch(`${window.APP_CONFIG.apiEndpoint}/students`);
+    if (res.ok) {
+      const liveData = await res.json();
+      if (Array.isArray(liveData) && liveData.length > 0) {
+        // Strip out DynamoDB partition key prefixes if present
+        students = liveData.map(s => ({
+          ...s,
+          id: s.id || (s.PK ? s.PK.replace("STUDENT#", "") : "STU-000")
+        }));
+      }
+    }
+  } catch (err) {
+    console.warn("DynamoDB backend unavailable; falling back to local records.", err);
+  }
+
   renderAll();
 };
 
+/* ==========================================================================
+   Authentication & Roles
+   ========================================================================== */
 function selectLoginRole(role) {
   ['director', 'tutor', 'teacher'].forEach(r => {
-    document.getElementById(`role-pill-${r}`).className = r === role ? "py-2 rounded-lg bg-white text-indigo-700 shadow-sm transition" : "py-2 rounded-lg text-slate-600 hover:text-slate-900 transition";
+    const el = document.getElementById(`role-pill-${r}`);
+    if (el) {
+      el.className = r === role ? "py-2 rounded-lg bg-white text-indigo-700 shadow-sm" : "py-2 rounded-lg text-slate-600";
+    }
   });
   currentRole = role;
 }
@@ -105,7 +138,8 @@ function handleStaffLogin(e) {
 }
 
 function logoutStaff() {
-  document.getElementById("login-modal").classList.remove("hidden");
+  const modal = document.getElementById("login-modal");
+  if (modal) modal.classList.remove("hidden");
 }
 
 function switchRole(role) {
@@ -116,7 +150,9 @@ function switchRole(role) {
 
   ['director', 'tutor', 'teacher'].forEach(r => {
     const btn = document.getElementById(`nav-btn-${r}`);
-    btn.className = r === role ? "px-3 py-1.5 rounded-lg bg-white text-indigo-700 shadow-sm" : "px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900";
+    if (btn) {
+      btn.className = r === role ? "px-3 py-1.5 rounded-lg bg-white text-indigo-700 shadow-sm" : "px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900";
+    }
   });
 
   renderAll();
@@ -125,9 +161,12 @@ function switchRole(role) {
 function switchDirectorTab(tab) {
   activeDirectorTab = tab;
   ['alerts', 'students', 'staff', 'fees'].forEach(t => {
-    document.getElementById(`dpanel-${t}`).classList.toggle("hidden", t !== tab);
-    const btn = document.getElementById(`dtab-${t}`);
-    btn.className = t === tab ? "px-3 py-2 text-indigo-700 border-b-2 border-indigo-700 whitespace-nowrap" : "px-3 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap";
+    const p = document.getElementById(`dpanel-${t}`);
+    const b = document.getElementById(`dtab-${t}`);
+    if (p) p.classList.toggle("hidden", t !== tab);
+    if (b) {
+      b.className = t === tab ? "px-3 py-2 text-indigo-700 border-b-2 border-indigo-700 whitespace-nowrap" : "px-3 py-2 text-slate-500 hover:text-slate-800 whitespace-nowrap";
+    }
   });
 }
 
@@ -140,14 +179,22 @@ function renderAll() {
   renderTeacherQueue();
 }
 
+/* ==========================================================================
+   Director: WhatsApp Alerts
+   ========================================================================== */
 function renderAlerts() {
   const cont = document.getElementById("director-alerts-list");
+  if (!cont) return;
   cont.innerHTML = "";
-  document.getElementById("d-badge-alerts").textContent = alerts.length;
+
+  const badge = document.getElementById("d-badge-alerts");
+  if (badge) badge.textContent = alerts.length;
+
   if (alerts.length === 0) {
-    cont.innerHTML = `<div class="p-4 text-center bg-white rounded-2xl border border-slate-200 text-slate-400">No pending alerts.</div>`;
+    cont.innerHTML = '<div class="p-4 text-center bg-white rounded-2xl border border-slate-200 text-slate-400">No pending alerts.</div>';
     return;
   }
+
   alerts.forEach(a => {
     const d = document.createElement("div");
     d.className = "p-3.5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2";
@@ -158,12 +205,11 @@ function renderAlerts() {
       </div>
       <p class="p-2.5 bg-slate-50 rounded-xl text-slate-600 text-xs">${a.text}</p>
       <div class="flex justify-end space-x-2">
-        <button onclick="dismissAlert('${a.id}')" class="px-2 py-1 text-slate-500 hover:text-slate-700">Dismiss</button>
-        <button onclick="sendAlertWhatsApp('${a.id}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold flex items-center space-x-1">
-          <i class="fa-brands fa-whatsapp text-sm"></i><span>Send WhatsApp</span>
+        <button onclick="dismissAlert('${a.id}')" class="px-2 py-1 text-slate-500 hover:text-slate-700 text-xs font-semibold">Dismiss</button>
+        <button onclick="sendAlertWhatsApp('${a.id}')" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center space-x-1">
+          <i class="fa-brands fa-whatsapp text-sm mr-1"></i><span>Send WhatsApp</span>
         </button>
-      </div>
-    `;
+      </div>`;
     cont.appendChild(d);
   });
 }
@@ -180,44 +226,56 @@ function dismissAlert(id) {
   renderAlerts();
 }
 
+/* ==========================================================================
+   Director: Students Master
+   ========================================================================== */
 function renderDirectorStudents() {
   const tbody = document.getElementById("director-students-tbody");
+  if (!tbody) return;
   tbody.innerHTML = "";
-  const filter = document.getElementById("d-student-grade-filter").value;
-  const search = document.getElementById("d-student-search").value.toLowerCase();
+
+  const filter = document.getElementById("d-student-grade-filter") ? document.getElementById("d-student-grade-filter").value : "ALL";
+  const search = document.getElementById("d-student-search") ? document.getElementById("d-student-search").value.toLowerCase() : "";
 
   let list = students;
   if (filter !== "ALL") list = list.filter(s => s.grade === filter);
   if (search) list = list.filter(s => s.name.toLowerCase().includes(search));
 
-  document.getElementById("d-badge-students").textContent = students.length;
+  const badge = document.getElementById("d-badge-students");
+  if (badge) badge.textContent = students.length;
 
   list.forEach(s => {
     const tr = document.createElement("tr");
     tr.className = "hover:bg-slate-50";
     tr.innerHTML = `
       <td class="p-3 font-bold text-slate-900 cursor-pointer hover:text-indigo-600" onclick="openStudentModal('${s.id}')">${s.name}</td>
-      <td class="p-3">${s.grade} (${s.stream})</td>
+      <td class="p-3">${s.grade} (${s.stream || 'SSC'})</td>
       <td class="p-3 font-mono"><a href="tel:${s.phone}" class="text-indigo-600 font-bold hover:underline">${s.phone}</a></td>
-      <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.attendance === 'PRESENT' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${s.attendance}</span></td>
+      <td class="p-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${s.attendance === 'PRESENT' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}">${s.attendance || 'PRESENT'}</span></td>
       <td class="p-3 text-right">
-        <button onclick="openStudentModal('${s.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg font-semibold">Inspect</button>
-      </td>
-    `;
+        <button onclick="openStudentModal('${s.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg font-bold text-xs">View</button>
+      </td>`;
     tbody.appendChild(tr);
   });
 }
 
+/* ==========================================================================
+   Director: Faculty Attendance & Work Proof
+   ========================================================================== */
 function switchStaffSubTab(tab) {
   activeStaffTab = tab;
-  document.getElementById("stab-tutor").className = tab === 'tutor' ? "px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs" : "px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold text-xs";
-  document.getElementById("stab-teacher").className = tab === 'teacher' ? "px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs" : "px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold text-xs";
+  const tBtn = document.getElementById("stab-tutor");
+  const teachBtn = document.getElementById("stab-teacher");
+  if (tBtn) tBtn.className = tab === 'tutor' ? "px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold" : "px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold";
+  if (teachBtn) teachBtn.className = tab === 'teacher' ? "px-3 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold" : "px-3 py-1 rounded-lg bg-slate-100 text-slate-600 font-semibold";
   renderStaff();
 }
 
 function renderStaff() {
   const tbody = document.getElementById("director-staff-tbody");
+  if (!tbody) return;
   tbody.innerHTML = "";
+
   faculty.filter(f => f.role === activeStaffTab).forEach(st => {
     const tr = document.createElement("tr");
     tr.innerHTML = `
@@ -225,14 +283,13 @@ function renderStaff() {
       <td class="p-3 font-mono">₹${st.basePay.toLocaleString('en-IN')}</td>
       <td class="p-3">
         <div class="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
-          <button onclick="markStaff('${st.id}', 'PRESENT')" class="px-2 py-0.5 rounded text-xs font-bold ${st.today === 'PRESENT' ? 'bg-emerald-600 text-white' : 'text-slate-600'}">P</button>
-          <button onclick="markStaff('${st.id}', 'ABSENT')" class="px-2 py-0.5 rounded text-xs font-bold ${st.today === 'ABSENT' ? 'bg-rose-600 text-white' : 'text-slate-600'}">A</button>
+          <button onclick="markStaff('${st.id}', 'PRESENT')" class="px-2 py-0.5 rounded text-xs font-bold ${st.today === 'PRESENT' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-400'}">P</button>
+          <button onclick="markStaff('${st.id}', 'ABSENT')" class="px-2 py-0.5 rounded text-xs font-bold ${st.today === 'ABSENT' ? 'bg-rose-600 text-white' : 'text-slate-400'}">A</button>
         </div>
       </td>
       <td class="p-3 text-right">
-        <button onclick="showToast('Viewing verified work log for ${st.name}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg font-semibold">Activity</button>
-      </td>
-    `;
+        <button onclick="showToast('Viewing verified work log for ${st.name}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold">Proof</button>
+      </td>`;
     tbody.appendChild(tr);
   });
 }
@@ -246,25 +303,37 @@ function markStaff(id, status) {
   }
 }
 
+/* ==========================================================================
+   Director: Tuition Fees Ledger
+   ========================================================================== */
 function renderFees() {
   let exp = 0, col = 0, pen = 0;
   const list = document.getElementById("fees-student-list");
+  if (!list) return;
   list.innerHTML = "";
+
   students.forEach(s => {
     exp += s.fee;
     if (s.feeStatus === "PAID") col += s.fee; else pen += s.fee;
-
     const d = document.createElement("div");
     d.className = "p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between";
     d.innerHTML = `
-      <div><span class="font-bold text-slate-900 block">${s.name} (${s.grade})</span><span class="font-mono text-slate-400">₹${s.fee}</span></div>
-      <button onclick="toggleFee('${s.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold ${s.feeStatus === 'PAID' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}">${s.feeStatus}</button>
-    `;
+      <div>
+        <span class="font-bold text-slate-900 block">${s.name} (${s.grade})</span>
+        <span class="font-mono text-slate-500 text-xs">₹${s.fee}</span>
+      </div>
+      <button onclick="toggleFee('${s.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold ${s.feeStatus === 'PAID' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-rose-50 text-rose-700 border border-rose-200'}">
+        ${s.feeStatus}
+      </button>`;
     list.appendChild(d);
   });
-  document.getElementById("fee-stat-expected").textContent = `₹${exp}`;
-  document.getElementById("fee-stat-collected").textContent = `₹${col}`;
-  document.getElementById("fee-stat-pending").textContent = `₹${pen}`;
+
+  const expEl = document.getElementById("fee-stat-expected");
+  const colEl = document.getElementById("fee-stat-collected");
+  const penEl = document.getElementById("fee-stat-pending");
+  if (expEl) expEl.textContent = `₹${exp}`;
+  if (colEl) colEl.textContent = `₹${col}`;
+  if (penEl) penEl.textContent = `₹${pen}`;
 }
 
 function toggleFee(id) {
@@ -276,17 +345,26 @@ function toggleFee(id) {
   }
 }
 
+/* ==========================================================================
+   Tutor Desk
+   ========================================================================== */
 function setTutorFilter(f) {
   tutorFilter = f;
-  document.getElementById("tbtn-all").className = f === 'ALL' ? "px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold" : "px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-semibold";
-  document.getElementById("tbtn-present").className = f === 'PRESENT' ? "px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold" : "px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-semibold";
+  const allBtn = document.getElementById("tbtn-all");
+  const presBtn = document.getElementById("tbtn-present");
+  if (allBtn) allBtn.className = f === 'ALL' ? "px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold" : "px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-semibold";
+  if (presBtn) presBtn.className = f === 'PRESENT' ? "px-3 py-1.5 rounded-xl bg-indigo-50 text-indigo-700 font-bold" : "px-3 py-1.5 rounded-xl bg-slate-100 text-slate-600 font-semibold";
   renderTutorCards();
 }
 
 function renderTutorCards() {
   const cont = document.getElementById("tutor-cards-container");
+  if (!cont) return;
   cont.innerHTML = "";
-  const grade = document.getElementById("tutor-grade-filter").value;
+
+  const gradeSelect = document.getElementById("tutor-grade-filter");
+  const grade = gradeSelect ? gradeSelect.value : "ALL";
+
   let list = students;
   if (tutorFilter === "PRESENT") list = list.filter(s => s.attendance === "PRESENT");
   if (grade !== "ALL") list = list.filter(s => s.grade === grade);
@@ -296,18 +374,19 @@ function renderTutorCards() {
     d.className = "p-3 bg-white rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between";
     d.innerHTML = `
       <div>
-        <span class="font-bold text-slate-900 cursor-pointer hover:text-indigo-600 block" onclick="openStudentModal('${s.id}')">${s.name} (${s.grade})</span>
-        <span class="text-slate-400 text-[11px]">${s.school}</span>
+        <span class="font-bold text-slate-900 cursor-pointer hover:text-indigo-600 block text-sm" onclick="openStudentModal('${s.id}')">${s.name} (${s.grade})</span>
+        <span class="text-slate-400 text-[11px]">${s.school || 'Universal School'} • ${s.area || 'Campus'}</span>
       </div>
       <div class="flex items-center space-x-2">
-        <a href="tel:${s.phone}" class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600"><i class="fa-solid fa-phone text-xs"></i></a>
+        <a href="tel:${s.phone}" class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600 hover:bg-indigo-50 hover:text-indigo-600">
+          <i class="fa-solid fa-phone text-xs"></i>
+        </a>
         <div class="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-50">
-          <button onclick="toggleStudentAtt('${s.id}', 'PRESENT')" class="px-2 py-0.5 rounded text-xs font-bold ${s.attendance === 'PRESENT' ? 'bg-emerald-600 text-white' : 'text-slate-600'}">P</button>
-          <button onclick="toggleStudentAtt('${s.id}', 'ABSENT')" class="px-2 py-0.5 rounded text-xs font-bold ${s.attendance === 'ABSENT' ? 'bg-rose-600 text-white' : 'text-slate-600'}">A</button>
+          <button onclick="toggleStudentAtt('${s.id}', 'PRESENT')" class="px-2 py-0.5 rounded text-xs font-bold ${s.attendance === 'PRESENT' ? 'bg-white text-emerald-700 shadow-xs' : 'text-slate-400'}">P</button>
+          <button onclick="toggleStudentAtt('${s.id}', 'ABSENT')" class="px-2 py-0.5 rounded text-xs font-bold ${s.attendance === 'ABSENT' ? 'bg-rose-600 text-white' : 'text-slate-400'}">A</button>
         </div>
-        <button onclick="openStudentModal('${s.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg font-semibold">Dossier</button>
-      </div>
-    `;
+        <button onclick="openStudentModal('${s.id}')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs font-bold">Dossier</button>
+      </div>`;
     cont.appendChild(d);
   });
 }
@@ -323,7 +402,7 @@ function toggleStudentAtt(id, val) {
 
 function pushFloorAbsentees() {
   const abs = students.filter(s => s.attendance === "ABSENT");
-  if (abs.length === 0) return showToast("No absentees to push");
+  if (abs.length === 0) return showToast("No absentees on floor");
   abs.forEach(s => {
     if (!alerts.some(a => a.studentName === s.name)) {
       alerts.push({
@@ -331,7 +410,7 @@ function pushFloorAbsentees() {
         studentName: s.name,
         grade: s.grade,
         phone: s.phone,
-        text: `Dear Parents, Warm greetings from ${window.APP_CONFIG.institutionName}. We noticed that ${s.name} is absent for today's session. Please coordinate with us.`
+        text: `Dear Parents, Warm greetings from ${window.APP_CONFIG.institutionName}. We noticed that ${s.name} (${s.grade}) is absent from today's classes.`
       });
     }
   });
@@ -339,36 +418,47 @@ function pushFloorAbsentees() {
   showToast(`Pushed ${abs.length} absentees to Director Alerts`);
 }
 
+/* ==========================================================================
+   Teacher Desk
+   ========================================================================== */
 function renderTeacherQueue() {
   const cont = document.getElementById("teacher-cards-container");
+  if (!cont) return;
   cont.innerHTML = "";
+
   students.forEach(s => {
     const d = document.createElement("div");
     d.className = "p-3 bg-white rounded-2xl border border-slate-200 flex items-center justify-between";
     d.innerHTML = `
-      <div><span class="font-bold text-slate-900 block">${s.name} (${s.grade})</span><span class="text-slate-400 text-[11px]">${s.school}</span></div>
-      <button onclick="promptDoubt('${s.id}')" class="px-3 py-1 bg-indigo-600 text-white rounded-xl font-bold">Log Doubt Cleared</button>
-    `;
+      <div>
+        <span class="font-bold text-slate-900 block text-xs">${s.name} (${s.grade})</span>
+        <span class="text-slate-400 text-[11px]">${s.school || 'Universal School'}</span>
+      </div>
+      <button onclick="promptDoubt('${s.id}')" class="px-3 py-1 bg-indigo-600 text-white rounded-xl font-bold text-xs hover:bg-indigo-700">Log Doubt</button>`;
     cont.appendChild(d);
   });
 }
 
 function promptDoubt(id) {
   const s = students.find(x => x.id === id);
-  const topic = prompt(`Topic where ${s.name} cleared doubts:`, "Trigonometry");
-  if (topic) showToast(`Doubt cleared for ${s.name} in ${topic}`);
+  const topic = prompt(`Topic where ${s.name} resolved doubts:`, "Trigonometry");
+  if (topic) showToast(`Doubt logged for ${s.name} in ${topic}`);
 }
 
-/* Dossier Modal Handlers */
+/* ==========================================================================
+   Student Dossier Modal Handlers
+   ========================================================================== */
 function openStudentModal(id) {
   activeStudentId = id;
   const s = students.find(x => x.id === id);
   if (!s) return;
+
   document.getElementById("dossier-name").textContent = s.name;
   document.getElementById("dossier-grade-badge").textContent = s.grade;
-  document.getElementById("dossier-phone-primary").textContent = s.phone;
-  document.getElementById("dossier-phone-primary").href = `tel:${s.phone}`;
-  document.getElementById("dossier-school").textContent = s.school;
+  const phoneEl = document.getElementById("dossier-phone-primary");
+  phoneEl.textContent = s.phone;
+  phoneEl.href = `tel:${s.phone}`;
+  document.getElementById("dossier-school").textContent = s.school || "Bhashyam High School";
 
   renderSyllabusUI(s);
   renderSlipTestsUI(s);
@@ -379,22 +469,28 @@ function openStudentModal(id) {
 function switchDossierTab(tab) {
   activeDossierTab = tab;
   ['syllabus', 'slip-tests', 'weekly-test', 'exams'].forEach(t => {
-    document.getElementById(`mpanel-${t}`).classList.toggle("hidden", t !== tab);
-    const btn = document.getElementById(`mtab-${t}`);
-    btn.className = t === tab ? "py-2 px-3 text-indigo-700 border-b-2 border-indigo-700" : "py-2 px-3 text-slate-500 hover:text-slate-800";
+    const p = document.getElementById(`mpanel-${t}`);
+    const b = document.getElementById(`mtab-${t}`);
+    if (p) p.classList.toggle("hidden", t !== tab);
+    if (b) {
+      b.className = t === tab ? "py-2 px-3 text-indigo-700 border-b-2 border-indigo-700 font-bold text-xs" : "py-2 px-3 text-slate-500 hover:text-slate-800 font-semibold text-xs";
+    }
   });
 }
 
 function renderSyllabusUI(s) {
   const subCont = document.getElementById("dossier-subjects-list");
+  if (!subCont) return;
   subCont.innerHTML = "";
-  if (s.syllabus.length === 0) {
-    subCont.innerHTML = `<span class="text-slate-400 italic">No syllabus added.</span>`;
+
+  if (!s.syllabus || s.syllabus.length === 0) {
+    subCont.innerHTML = '<span class="text-slate-400 italic text-xs">No syllabus added.</span>';
     return;
   }
+
   s.syllabus.forEach((sub, idx) => {
     const btn = document.createElement("button");
-    btn.className = `px-3 py-1 rounded-xl font-bold ${idx === currentSubjectIdx ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'}`;
+    btn.className = `px-3 py-1 rounded-xl font-bold text-xs ${idx === currentSubjectIdx ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'}`;
     btn.textContent = sub.subject;
     btn.onclick = () => { currentSubjectIdx = idx; renderSyllabusUI(s); };
     subCont.appendChild(btn);
@@ -403,10 +499,11 @@ function renderSyllabusUI(s) {
   const chapCont = document.getElementById("dossier-chapters-list");
   chapCont.innerHTML = "";
   const curSub = s.syllabus[currentSubjectIdx];
-  if (curSub && curSub.chapters.length > 0) {
+
+  if (curSub && curSub.chapters && curSub.chapters.length > 0) {
     curSub.chapters.forEach((ch, idx) => {
       const btn = document.createElement("button");
-      btn.className = `px-2.5 py-1 rounded-lg border font-semibold ${idx === currentChapterIdx ? 'border-indigo-600 text-indigo-700 bg-indigo-50' : 'border-slate-200 text-slate-600'}`;
+      btn.className = `px-2.5 py-1 rounded-lg border text-xs font-semibold ${idx === currentChapterIdx ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50' : 'border-slate-200 text-slate-600'}`;
       btn.textContent = ch.title;
       btn.onclick = () => { currentChapterIdx = idx; renderSyllabusUI(s); };
       chapCont.appendChild(btn);
@@ -415,18 +512,20 @@ function renderSyllabusUI(s) {
     const topCont = document.getElementById("dossier-subtopics-list");
     topCont.innerHTML = "";
     const curChap = curSub.chapters[currentChapterIdx];
-    if (curChap && curChap.topics.length > 0) {
+
+    if (curChap && curChap.topics && curChap.topics.length > 0) {
       curChap.topics.forEach((t, idx) => {
         const div = document.createElement("div");
-        div.className = "p-2 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between";
+        div.className = "p-2 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs";
         div.innerHTML = `
           <span class="font-bold text-slate-800">${t.name}</span>
           <div class="flex items-center space-x-1">
             ${[0, 25, 50, 75, 100].map(v => `
-              <button onclick="setConfidence(${idx},${v})" class="px-1.5 py-0.5 rounded text-[10px] font-bold ${t.confidence === v ? 'bg-emerald-600 text-white' : 'bg-white border text-slate-600'}">${v}%</button>
+              <button onclick="setConfidence(${idx},${v})" class="px-1.5 py-0.5 rounded text-[10px] font-bold ${t.confidence === v ? 'bg-indigo-600 text-white' : 'bg-slate-200 text-slate-600'}">
+                ${v}%
+              </button>
             `).join('')}
-          </div>
-        `;
+          </div>`;
         topCont.appendChild(div);
       });
     }
@@ -435,21 +534,37 @@ function renderSyllabusUI(s) {
 
 function setConfidence(idx, val) {
   const s = students.find(x => x.id === activeStudentId);
-  s.syllabus[currentSubjectIdx].chapters[currentChapterIdx].topics[idx].confidence = val;
-  renderSyllabusUI(s);
-  showToast(`Confidence: ${val}%`);
+  if (s && s.syllabus[currentSubjectIdx]?.chapters[currentChapterIdx]?.topics[idx]) {
+    s.syllabus[currentSubjectIdx].chapters[currentChapterIdx].topics[idx].confidence = val;
+    renderSyllabusUI(s);
+    showToast(`Confidence: ${val}%`);
+  }
+}
+
+function promptAddSubject() {
+  const sub = prompt("Subject Name (e.g. Mathematics, Science):", "Physics");
+  if (sub) {
+    const s = students.find(x => x.id === activeStudentId);
+    if (!s.syllabus) s.syllabus = [];
+    s.syllabus.push({ subject: sub, chapters: [] });
+    renderSyllabusUI(s);
+  }
 }
 
 function renderSlipTestsUI(s) {
   const cont = document.getElementById("dossier-tests-history");
+  if (!cont) return;
   cont.innerHTML = "";
-  s.slipTests.forEach(t => {
+
+  (s.slipTests || []).forEach(t => {
     const d = document.createElement("div");
-    d.className = "p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between";
+    d.className = "p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs";
     d.innerHTML = `
-      <div><span class="font-bold text-slate-900 block">${t.topic}</span><span class="text-slate-400 italic">${t.remarks}</span></div>
-      <span class="font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">${t.score}/${t.max}</span>
-    `;
+      <div>
+        <span class="font-bold text-slate-900 block">${t.topic}</span>
+        <span class="text-slate-400 italic">${t.remarks}</span>
+      </div>
+      <span class="font-mono font-bold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded">${t.score}/${t.max}</span>`;
     cont.appendChild(d);
   });
 }
@@ -462,6 +577,7 @@ function handleSaveSlipTest(e) {
   const max = document.getElementById("st-max").value;
   const remarks = document.getElementById("st-remarks").value;
 
+  if (!s.slipTests) s.slipTests = [];
   s.slipTests.unshift({ topic, score, max, remarks });
   renderSlipTestsUI(s);
   showToast("Slip test saved");
@@ -470,37 +586,43 @@ function handleSaveSlipTest(e) {
 
 function renderExamsUI(s) {
   const cList = document.getElementById("dossier-exam-countdowns");
+  if (!cList) return;
   cList.innerHTML = "";
-  s.exams.forEach(ex => {
+
+  (s.exams || []).forEach(ex => {
     const d = document.createElement("div");
-    d.className = "p-2 bg-rose-50 border border-rose-200 rounded-xl flex justify-between";
+    d.className = "p-2 bg-rose-50 border border-rose-200 rounded-xl flex justify-between text-xs";
     d.innerHTML = `<span class="font-bold text-slate-800">${ex.name}</span><span class="font-mono font-bold text-rose-700">${ex.daysLeft} Days Left</span>`;
     cList.appendChild(d);
   });
 
   const rList = document.getElementById("dossier-exam-deltas");
   rList.innerHTML = "";
-  s.examResults.forEach(r => {
+  (s.examResults || []).forEach(r => {
     const d = document.createElement("div");
-    d.className = "p-2 bg-slate-50 border border-slate-200 rounded-xl flex justify-between";
+    d.className = "p-2 bg-slate-50 border border-slate-200 rounded-xl flex justify-between text-xs";
     d.innerHTML = `<span class="font-bold text-slate-800">${r.name}</span><span class="font-mono font-bold text-emerald-700">${r.percentage}% (${r.delta})</span>`;
     rList.appendChild(d);
   });
 }
 
 function promptAddExam() {
-  const name = prompt("Exam Name (e.g. Maths Quarterly):");
+  const name = prompt("Exam Name (e.g. Maths Quarterly):", "Science Midterm");
   const days = prompt("Days Remaining:", "5");
   if (name && days) {
     const s = students.find(x => x.id === activeStudentId);
+    if (!s.exams) s.exams = [];
     s.exams.push({ name, daysLeft: parseInt(days) });
     renderExamsUI(s);
   }
 }
 
+/* ==========================================================================
+   Live Student Enrollment (POST to AWS API Gateway & DynamoDB)
+   ========================================================================== */
 function openEnrollModal() { document.getElementById("enroll-modal").classList.remove("hidden"); }
 
-function handleEnrollStudent(e) {
+async function handleEnrollStudent(e) {
   e.preventDefault();
   const name = document.getElementById("en-name").value;
   const school = document.getElementById("en-school").value;
@@ -510,30 +632,68 @@ function handleEnrollStudent(e) {
   const phone = document.getElementById("en-phone").value;
   const fee = parseInt(document.getElementById("en-fee").value) || 1500;
 
-  students.unshift({
-    id: `STU-00${students.length + 1}`,
-    name, school, area, grade, stream, phone,
+  const newStudent = {
+    id: `STU-${Date.now().toString().slice(-4)}`,
+    name,
+    school,
+    area,
+    grade,
+    stream,
+    phone,
     attendance: "PRESENT",
-    fee, feeStatus: "UNPAID",
+    fee,
+    feeStatus: "UNPAID",
     syllabus: [{ subject: "Mathematics", chapters: [] }],
-    slipTests: [], exams: [], examResults: []
-  });
+    slipTests: [],
+    exams: [],
+    examResults: []
+  };
 
-  renderAll();
-  closeModal('enroll-modal');
-  showToast(`Enrolled ${name} successfully`);
-  e.target.reset();
+  try {
+    const res = await fetch(`${window.APP_CONFIG.apiEndpoint}/students`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(newStudent)
+    });
+
+    if (res.ok) {
+      students.unshift(newStudent);
+      renderAll();
+      closeModal('enroll-modal');
+      showToast(`Enrolled ${name} and saved to AWS DynamoDB!`);
+      e.target.reset();
+    } else {
+      showToast("Error persisting to AWS DynamoDB", "error");
+    }
+  } catch (err) {
+    console.error("Enrollment network error:", err);
+    students.unshift(newStudent);
+    renderAll();
+    closeModal('enroll-modal');
+    showToast(`Enrolled ${name} (offline mode)`);
+    e.target.reset();
+  }
 }
 
-/* Modal Helpers matching your screenshot lines 345-355 */
-function closeModal(id) { document.getElementById(id).classList.add("hidden"); }
+/* ==========================================================================
+   UI Modals & Toast Utility
+   ========================================================================== */
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.add("hidden");
+}
 
 function showToast(message, type = "success") {
   const toast = document.getElementById("toast");
   const msgEl = document.getElementById("toast-msg");
   const icon = document.getElementById("toast-icon");
+  if (!toast || !msgEl || !icon) return;
+
   msgEl.textContent = message;
-  icon.className = type === "error" ? "fa-solid fa-circle-exclamation text-rose-400" : (type === "info" ? "fa-solid fa-circle-info text-sky-400" : "fa-solid fa-circle-check text-emerald-400");
+  icon.className = type === "error"
+    ? "fa-solid fa-circle-exclamation text-rose-400"
+    : "fa-solid fa-circle-check text-emerald-400";
+
   toast.classList.remove("translate-y-24", "opacity-0");
   setTimeout(() => toast.classList.add("translate-y-24", "opacity-0"), 2800);
 }
