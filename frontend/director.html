@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tuition Desk &bull; Director Executive Console</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="bg-slate-950 text-slate-100 antialiased min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white pb-24">
+
+  <!-- Mobile-First Sticky Header -->
+  <header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md shadow-xs">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
+      
+      <div class="flex items-center space-x-2.5 min-w-0">
+        <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-700 via-indigo-600 to-indigo-500 text-white flex items-center justify-center font-black text-lg shadow-sm">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="truncate">
+          <div class="flex items-center space-x-1.5">
+            <span class="font-extrabold text-white text-sm tracking-tight truncate block">Tuition Desk</span>
+            <span class="text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/40">Master Authority</span>
+          </div>
+          <p class="text-[11px] text-slate-400 font-medium truncate">Office of the Managing Director</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
+        <button onclick="toggleAIDrawer()" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center space-x-1.5 transition touch-btn shadow-md">
+          <i class="fa-solid fa-brain text-amber-300 text-sm"></i>
+          <span>AI Desk</span>
+        </button>
+        <a href="tutor.html" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 transition" title="Step In Floor Tutor">
+          <i class="fa-solid fa-person-chalkboard text-sm"></i>
+        </a>
+        <button onclick="logout()" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition" title="Sign Out">
+          <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-2xl w-full mx-auto px-3 sm:px-4 py-4 space-y-4">
+
+    <!-- MASTER SECTION NAVIGATION (Vertical List Format) -->
+    <div id="master-nav-container" class="space-y-2.5">
+      
+      <button onclick="openDirectorView('attendance-floor')" class="w-full p-4 bg-slate-900 border border-slate-800 hover:border-indigo-500 rounded-2xl flex items-center justify-between transition group shadow-xs">
+        <div class="flex items-center space-x-3.5">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-base">
+            <i class="fa-solid fa-clipboard-user"></i>
+          </div>
+          <div class="text-left">
+            <h3 class="text-sm font-extrabold text-white group-hover:text-indigo-400">1. Student Floor Attendance & Activity</h3>
+            <p class="text-[11px] text-slate-400">Live floor marks, tutor actions, and daily study records.</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+      </button>
+
+      <button onclick="openDirectorView('dispatches')" class="w-full p-4 bg-slate-900 border border-slate-800 hover:border-indigo-500 rounded-2xl flex items-center justify-between transition group shadow-xs">
+        <div class="flex items-center space-x-3.5">
+          <div class="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center font-bold text-base">
+            <i class="fa-brands fa-whatsapp"></i>
+          </div>
+          <div class="text-left">
+            <h3 class="text-sm font-extrabold text-white group-hover:text-indigo-400 flex items-center space-x-1.5">
+              <span>2. Official WhatsApp Queues</span>
+              <span id="badge-dispatches-count" class="px-2 py-0.2 bg-rose-600 text-white rounded-full text-[10px]">0</span>
+            </h3>
+            <p class="text-[11px] text-slate-400">Absentees, fees due, discipline, and password reset tickets.</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+      </button>
+
+      <button onclick="openDirectorView('intake')" class="w-full p-4 bg-slate-900 border border-slate-800 hover:border-indigo-500 rounded-2xl flex items-center justify-between transition group shadow-xs">
+        <div class="flex items-center space-x-3.5">
+          <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold text-base">
+            <i class="fa-solid fa-user-plus"></i>
+          </div>
+          <div class="text-left">
+            <h3 class="text-sm font-extrabold text-white group-hover:text-indigo-400">3. Unified Intake & Authorization</h3>
+            <p class="text-[11px] text-slate-400">Fresh/Legacy admissions, Tutors, Senior Faculty, and Staff.</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+      </button>
+
+      <button onclick="openDirectorView('fees-salaries')" class="w-full p-4 bg-slate-900 border border-slate-800 hover:border-indigo-500 rounded-2xl flex items-center justify-between transition group shadow-xs">
+        <div class="flex items-center space-x-3.5">
+          <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold text-base">
+            <i class="fa-solid fa-indian-rupee-sign"></i>
+          </div>
+          <div class="text-left">
+            <h3 class="text-sm font-extrabold text-white group-hover:text-indigo-400">4. Fees, Salaries & Ledger</h3>
+            <p class="text-[11px] text-slate-400">Student collections, 26-day staff payroll, and expenses.</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+      </button>
+
+      <button onclick="openDirectorView('cloud-usage')" class="w-full p-4 bg-slate-900 border border-slate-800 hover:border-indigo-500 rounded-2xl flex items-center justify-between transition group shadow-xs">
+        <div class="flex items-center space-x-3.5">
+          <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center font-bold text-base">
+            <i class="fa-solid fa-server"></i>
+          </div>
+          <div class="text-left">
+            <h3 class="text-sm font-extrabold text-white group-hover:text-indigo-400">5. AWS Cloud & Bedrock INR Telemetry</h3>
+            <p class="text-[11px] text-slate-400">Free Tier limits, token trackers, and rupee cost analysis.</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+      </button>
+
+      <button onclick="openDirectorView('security-portal')" class="w-full p-4 bg-slate-900 border border-slate-800 hover:border-indigo-500 rounded-2xl flex items-center justify-between transition group shadow-xs">
+        <div class="flex items-center space-x-3.5">
+          <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center font-bold text-base">
+            <i class="fa-solid fa-shield-halved"></i>
+          </div>
+          <div class="text-left">
+            <h3 class="text-sm font-extrabold text-white group-hover:text-indigo-400">6. Director Security Portal</h3>
+            <p class="text-[11px] text-slate-400">Update Master PIN, change passwords, and manage authorities.</p>
+          </div>
+        </div>
+        <i class="fa-solid fa-chevron-right text-slate-600 text-xs"></i>
+      </button>
+
+    </div>
+
+    <!-- ==================== VIEW 1: STUDENTS & ATTENDANCE FLOOR ==================== -->
+    <div id="view-attendance-floor" class="hidden space-y-3.5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <button onclick="returnToMasterList()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-left"></i><span>Back</span>
+        </button>
+        <h2 class="text-xs font-extrabold text-white uppercase tracking-wider">Floor Student Attendance</h2>
+        <button onclick="loadDirectorFloorData()" class="text-xs text-indigo-400 font-bold"><i class="fa-solid fa-arrows-rotate mr-1"></i>Sync</button>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <select id="floor-class-filter" onchange="renderDirectorFloorCards()" class="w-full px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white">
+          <option value="ALL">All Grades / Streams</option>
+          <option value="1">Class 1</option>
+          <option value="2">Class 2</option>
+          <option value="3">Class 3</option>
+          <option value="4">Class 4</option>
+          <option value="5">Class 5</option>
+          <option value="6">Class 6</option>
+          <option value="7">Class 7</option>
+          <option value="8">Class 8</option>
+          <option value="9">Class 9</option>
+          <option value="10">Class 10</option>
+          <option value="Inter 1">Inter 1st Year</option>
+          <option value="Inter 2">Inter 2nd Year</option>
+          <option value="B.Tech">B.Tech / Coding</option>
+        </select>
+      </div>
+
+      <div id="director-floor-cards-container" class="space-y-2"></div>
+    </div>
+
+    <!-- ==================== VIEW 2: OFFICIAL WHATSAPP QUEUES ==================== -->
+    <div id="view-dispatches" class="hidden space-y-3.5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <button onclick="returnToMasterList()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-left"></i><span>Back</span>
+        </button>
+        <h2 class="text-xs font-extrabold text-white uppercase tracking-wider">Outbound WhatsApp Queue</h2>
+        <button onclick="loadDispatchQueue()" class="text-xs text-indigo-400 font-bold"><i class="fa-solid fa-arrows-rotate mr-1"></i>Refresh</button>
+      </div>
+
+      <div class="grid grid-cols-4 p-1 bg-slate-900 rounded-2xl border border-slate-800 text-[10px] font-bold text-slate-400">
+        <button id="qcat-all" onclick="filterQueue('ALL')" class="py-2 rounded-xl bg-indigo-600 text-white">All</button>
+        <button id="qcat-absent" onclick="filterQueue('ABSENT_ALERT')" class="py-2 rounded-xl">Absentees</button>
+        <button id="qcat-fees" onclick="filterQueue('FEE_REMINDER')" class="py-2 rounded-xl">Fees Due</button>
+        <button id="qcat-disc" onclick="filterQueue('DISCIPLINE')" class="py-2 rounded-xl">Discipline</button>
+      </div>
+
+      <div id="director-queue-cards-list" class="space-y-2.5"></div>
+    </div>
+
+    <!-- ==================== VIEW 3: UNIFIED INTAKE & AUTHORIZATION ==================== -->
+    <div id="view-intake" class="hidden space-y-3.5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <button onclick="returnToMasterList()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-left"></i><span>Back</span>
+        </button>
+        <div class="inline-flex p-0.5 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold">
+          <button id="btn-intake-mode-student" onclick="toggleIntakeMode('student')" class="px-3 py-1 rounded-lg bg-indigo-600 text-white">Students</button>
+          <button id="btn-intake-mode-staff" onclick="toggleIntakeMode('staff')" class="px-3 py-1 rounded-lg text-slate-400">Staff / Faculty</button>
+        </div>
+      </div>
+
+      <!-- STUDENT INTAKE (Dual Mode: Fresh vs Legacy) -->
+      <div id="intake-student-panel" class="space-y-3">
+        <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 flex items-center justify-between text-xs">
+          <span class="text-slate-400 font-bold text-[11px]">ADMISSION TYPE:</span>
+          <div class="flex items-center space-x-3">
+            <label class="flex items-center space-x-1.5 cursor-pointer">
+              <input type="radio" name="admission-type-radio" value="fresh" checked onchange="toggleAdmissionDateMode(false)" class="text-indigo-600">
+              <span class="text-white text-xs font-bold">Fresh Admission</span>
+            </label>
+            <label class="flex items-center space-x-1.5 cursor-pointer">
+              <input type="radio" name="admission-type-radio" value="legacy" onchange="toggleAdmissionDateMode(true)" class="text-indigo-600">
+              <span class="text-amber-400 text-xs font-bold">Legacy / Old Student</span>
+            </label>
+          </div>
+        </div>
+
+        <form onsubmit="handleUnifiedStudentEnroll(event)" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3 text-xs shadow-xs">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 mb-1">STUDENT FULL NAME *</label>
+              <input type="text" id="adm-name" required placeholder="e.g. K. Sai Charan" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 mb-1">GRADE / LEVEL *</label>
+              <select id="adm-class" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+                <option value="1">Class 1</option>
+                <option value="2">Class 2</option>
+                <option value="3">Class 3</option>
+                <option value="4">Class 4</option>
+                <option value="5">Class 5</option>
+                <option value="6">Class 6</option>
+                <option value="7">Class 7</option>
+                <option value="8">Class 8</option>
+                <option value="9">Class 9</option>
+                <option value="10" selected>Class 10</option>
+                <option value="Inter 1">Inter 1st Year</option>
+                <option value="Inter 2">Inter 2nd Year</option>
+                <option value="B.Tech">B.Tech / Coding</option>
+              </select>
+            </div>
+          </div>
+
+          <div id="box-admission-date">
+            <label class="block text-[10px] font-bold text-slate-400 mb-1">ADMISSION DATE (30-DAY BILLING ANCHOR) *</label>
+            <input type="date" id="adm-date" value="2026-10-03" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 mb-1">SCHOOL / COLLEGE NAME *</label>
+              <input type="text" id="adm-school" required placeholder="Bhashyam High School" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 mb-1">AREA / COLONY *</label>
+              <input type="text" id="adm-area" required placeholder="Brodipet / Arundelpet" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 mb-1">FATHER'S FULL NAME *</label>
+              <input type="text" id="adm-father-name" required placeholder="Father Name" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 mb-1">FATHER'S 10-DIGIT PHONE *</label>
+              <input type="tel" id="adm-father-phone" required pattern="[0-9]{10}" placeholder="10-digit number" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 mb-1">MOTHER'S FULL NAME *</label>
+              <input type="text" id="adm-mother-name" required placeholder="Mother Name" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 mb-1">MOTHER'S 10-DIGIT PHONE *</label>
+              <input type="tel" id="adm-mother-phone" required pattern="[0-9]{10}" placeholder="10-digit number" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono">
+            </div>
+          </div>
+
+          <!-- Official WhatsApp Target -->
+          <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+            <span class="text-[11px] font-bold text-slate-300">Target Official WhatsApp Intimations:</span>
+            <div class="flex items-center space-x-4">
+              <label class="flex items-center space-x-1.5 cursor-pointer">
+                <input type="radio" name="adm-primary-target" value="father" checked class="text-indigo-600">
+                <span class="text-white text-xs">Father</span>
+              </label>
+              <label class="flex items-center space-x-1.5 cursor-pointer">
+                <input type="radio" name="adm-primary-target" value="mother" class="text-indigo-600">
+                <span class="text-white text-xs">Mother</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Subject Selection Chips -->
+          <div>
+            <label class="block text-[10px] font-bold text-slate-400 mb-1.5 uppercase">Subjects (Tap to Toggle)</label>
+            <div id="adm-subject-chips" class="flex flex-wrap gap-1.5">
+              <button type="button" onclick="toggleIntakeSubject(this, 'Telugu')" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 font-bold">Telugu</button>
+              <button type="button" onclick="toggleIntakeSubject(this, 'Hindi')" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 font-bold">Hindi</button>
+              <button type="button" onclick="toggleIntakeSubject(this, 'English')" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 font-bold">English</button>
+              <button type="button" onclick="toggleIntakeSubject(this, 'Mathematics')" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold">Mathematics</button>
+              <button type="button" onclick="toggleIntakeSubject(this, 'Science')" class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-bold">Science</button>
+              <button type="button" onclick="toggleIntakeSubject(this, 'Social Studies')" class="px-2.5 py-1 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 font-bold">Social Studies</button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 mb-1">STUDENT PHOTO (CAMERA / GALLERY)</label>
+              <input type="file" id="adm-photo" accept="image/*" class="w-full text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:bg-slate-800 file:text-white">
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-400 mb-1">MONTHLY TUITION FEE (₹)</label>
+              <input type="number" id="adm-fee" value="1500" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono">
+            </div>
+          </div>
+
+          <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md touch-btn text-xs">
+            Complete Student Enrollment
+          </button>
+        </form>
+      </div>
+
+      <!-- STAFF INTAKE & REVOCATION (Role-Differentiated) -->
+      <div id="intake-staff-panel" class="hidden space-y-3.5">
+        <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3 text-xs shadow-xs">
+          <h4 class="font-extrabold text-white text-xs uppercase tracking-wider">Register Staff Member</h4>
+          
+          <div class="grid grid-cols-3 p-1 bg-slate-950 rounded-xl border border-slate-800 text-[11px] font-bold text-slate-400">
+            <button type="button" id="srole-tutor" onclick="selectStaffRoleType('tutor')" class="py-1.5 rounded-lg bg-indigo-600 text-white">Floor Tutor</button>
+            <button type="button" id="srole-faculty" onclick="selectStaffRoleType('faculty')" class="py-1.5 rounded-lg text-slate-400">Senior Faculty</button>
+            <button type="button" id="srole-director" onclick="selectStaffRoleType('director')" class="py-1.5 rounded-lg text-slate-400">Associate Director</button>
+          </div>
+
+          <form onsubmit="handleStaffEnroll(event)" class="space-y-2.5">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1">STAFF FULL NAME *</label>
+                <input type="text" id="staff-reg-name" required placeholder="Staff Full Name" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1">CONTACT PHONE NUMBER *</label>
+                <input type="tel" id="staff-reg-phone" required placeholder="10-digit number" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono">
+              </div>
+            </div>
+
+            <div id="box-faculty-subjects" class="hidden">
+              <label class="block text-[10px] font-bold text-slate-400 mb-1">SPECIALTY SUBJECT(S) *</label>
+              <input type="text" id="staff-reg-specialty" placeholder="e.g. Senior Mathematics & Physics" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+            </div>
+
+            <div id="box-staff-passwords" class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1">PASSWORD (MIN 8) *</label>
+                <input type="password" id="staff-reg-pass1" placeholder="••••••••" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1">CONFIRM PASSWORD *</label>
+                <input type="password" id="staff-reg-pass2" placeholder="••••••••" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+              </div>
+            </div>
+
+            <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-md touch-btn text-xs">
+              Authorize & Save Staff Record
+            </button>
+          </form>
+        </div>
+
+        <!-- Staff List (Active vs Relieved) -->
+        <div class="space-y-2">
+          <h4 class="font-extrabold text-white text-xs uppercase tracking-wider">Staff Roster & Credential Actions</h4>
+          <div id="director-staff-list-container" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW 4: FEES, SALARIES & LEDGER ==================== -->
+    <div id="view-fees-salaries" class="hidden space-y-3.5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <button onclick="returnToMasterList()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-left"></i><span>Back</span>
+        </button>
+        <h2 class="text-xs font-extrabold text-white uppercase tracking-wider">Fees & Salaries Ledger</h2>
+        <button onclick="loadFinancialLedger()" class="text-xs text-indigo-400 font-bold"><i class="fa-solid fa-arrows-rotate mr-1"></i>Sync</button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
+        <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-xs">
+          <span class="text-slate-400 block text-[10px] uppercase font-bold">Fees Collected</span>
+          <span id="fin-collected" class="text-base sm:text-lg font-mono font-bold text-emerald-400 mt-0.5 block">₹0</span>
+        </div>
+        <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-xs">
+          <span class="text-slate-400 block text-[10px] uppercase font-bold">Fees Pending</span>
+          <span id="fin-pending" class="text-base sm:text-lg font-mono font-bold text-rose-400 mt-0.5 block">₹0</span>
+        </div>
+        <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-xs">
+          <span class="text-slate-400 block text-[10px] uppercase font-bold">Staff Payroll</span>
+          <span id="fin-payroll" class="text-base sm:text-lg font-mono font-bold text-amber-400 mt-0.5 block">₹0</span>
+        </div>
+        <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-xs">
+          <span class="text-slate-400 block text-[10px] uppercase font-bold">Net Cash</span>
+          <span id="fin-net" class="text-base sm:text-lg font-mono font-bold text-indigo-400 mt-0.5 block">₹0</span>
+        </div>
+      </div>
+
+      <div class="space-y-2">
+        <h3 class="font-extrabold text-white text-xs uppercase tracking-wider">Student Tuition Collections (Tap Chip to Toggle Paid)</h3>
+        <div id="director-fees-list-container" class="space-y-2"></div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW 5: CLOUD & BEDROCK INR TELEMETRY ==================== -->
+    <div id="view-cloud-usage" class="hidden space-y-3.5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <button onclick="returnToMasterList()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-left"></i><span>Back</span>
+        </button>
+        <h2 class="text-xs font-extrabold text-white uppercase tracking-wider">AWS Serverless & Bedrock Costs</h2>
+        <span class="text-emerald-400 text-xs font-bold">Free Tier Active</span>
+      </div>
+
+      <div class="p-4 bg-slate-900 rounded-2xl border border-slate-800 space-y-2">
+        <div class="flex justify-between items-center text-xs">
+          <span class="font-extrabold text-white">Monthly AI Spend Projection (50 Queries/Day)</span>
+          <span class="font-mono text-emerald-400 font-bold">₹35.50 INR / mo</span>
+        </div>
+        <p class="text-[11px] text-slate-400">At ~550 tokens per grounded query, 1,500 monthly queries consume ~0.825M tokens under Claude 3 Haiku pricing ($0.25/1M input tokens).</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2.5 text-xs">
+        <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800">
+          <span class="text-slate-400 block text-[10px] font-bold uppercase">AWS Lambda</span>
+          <strong class="text-white block mt-0.5 font-mono">420 / 1,000,000 Free</strong>
+        </div>
+        <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800">
+          <span class="text-slate-400 block text-[10px] font-bold uppercase">DynamoDB Storage</span>
+          <strong class="text-indigo-400 block mt-0.5 font-mono">0.12 MB / 25 GB Free</strong>
+        </div>
+        <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800">
+          <span class="text-slate-400 block text-[10px] font-bold uppercase">HTTP API Gateway</span>
+          <strong class="text-emerald-400 block mt-0.5 font-mono">530 / 1,000,000 Free</strong>
+        </div>
+        <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800">
+          <span class="text-slate-400 block text-[10px] font-bold uppercase">Amazon S3 Storage</span>
+          <strong class="text-amber-400 block mt-0.5 font-mono">0.45 MB / 5 GB Free</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== VIEW 6: DIRECTOR SECURITY PORTAL ==================== -->
+    <div id="view-security-portal" class="hidden space-y-3.5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <button onclick="returnToMasterList()" class="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-xs font-bold text-slate-300 hover:text-white flex items-center space-x-1.5">
+          <i class="fa-solid fa-arrow-left"></i><span>Back</span>
+        </button>
+        <h2 class="text-xs font-extrabold text-white uppercase tracking-wider">Director Security Credentials</h2>
+        <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300">Master</span>
+      </div>
+
+      <form onsubmit="handleUpdateDirectorPIN(event)" class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-3 text-xs shadow-xs">
+        <h4 class="font-extrabold text-white text-xs uppercase tracking-wider">Change 6-Digit Master Security PIN</h4>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 mb-1">CURRENT MASTER PIN</label>
+          <input type="password" id="sec-current-pin" maxlength="6" required placeholder="••••••" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-center tracking-widest text-base">
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold text-slate-400 mb-1">NEW 6-DIGIT SECURITY PIN</label>
+          <input type="password" id="sec-new-pin" maxlength="6" required placeholder="••••••" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-center tracking-widest text-base">
+        </div>
+        <button type="submit" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md touch-btn text-xs">
+          Update Master Security PIN
+        </button>
+      </form>
+    </div>
+
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/director.js"></script>
+</body>
+</html>
