@@ -1,72 +1,54 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+@import "tailwindcss";
 
 :root {
-  --font-main: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-}
-
-* {
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
+  --bg-deep-navy: #080f1e;
+  --panel-blue: #111827;
+  --accent-blue: #2563eb;
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
 }
 
 body {
-  font-family: var(--font-main);
-  margin: 0;
-  padding: 0;
-  background-color: #0f172a;
-  color: #f8fafc;
-  -webkit-font-smoothing: antialiased;
-}
-
-.glass-panel {
-  background: rgba(30, 41, 59, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.touch-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  user-select: none;
-  touch-action: manipulation;
-  transition: all 0.15s ease-in-out;
-}
-
-.touch-btn:active {
-  transform: scale(0.97);
-}
-
-#student-drawer, #bedrock-ai-drawer {
-  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-#student-drawer > div, #bedrock-ai-drawer > div {
-  animation: slideLeft 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes slideLeft {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  background-color: var(--bg-deep-navy);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
 }
 
 ::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
+  width: 0px;
+  background: transparent;
 }
 
-::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.6);
+.glass-panel {
+  background: rgba(17, 24, 39, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(51, 65, 85, 0.5);
 }
 
-::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.4);
-  border-radius: 9999px;
+.touch-btn {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+.touch-btn:active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+input, select, textarea {
+  min-height: 44px;
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--accent-blue) !important;
+  box-shadow: 0 0 0 1px var(--accent-blue) !important;
+  outline: none;
 }

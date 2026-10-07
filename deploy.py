@@ -1,6 +1,8 @@
 import json
 import logging
+import mimetypes
 import os
+import re
 import time
 import zipfile
 
@@ -22,6 +24,7 @@ cognito = boto3.client("cognito-idp", region_name=REGION)
 lambda_client = boto3.client("lambda", region_name=REGION)
 apigw = boto3.client("apigatewayv2", region_name=REGION)
 sts = boto3.client("sts", region_name=REGION)
+s3_client = boto3.client("s3", region_name=REGION)
 
 
 def setup_iam_role(role_name: str) -> str:
@@ -201,6 +204,62 @@ def setup_api_gateway(routes: dict[str, str], account_id: str) -> str:
     return api_endpoint
 
 
+def update_config_js(api_endpoint: str) -> None:
+    config_path = os.path.join("frontend", "js", "config.js")
+    if not os.path.exists(config_path):
+        logger.warning("Could not find config.js to update API endpoint.")
+        return
+    with open(config_path, "r") as f:
+        content = f.read()
+    content = re.sub(r'apiEndpoint:\s*".*?"', f'apiEndpoint: "{api_endpoint}"', content)
+    with open(config_path, "w") as f:
+        f.write(content)
+    logger.info("Updated frontend/js/config.js with live API Endpoint.")
+
+
+def deploy_frontend_s3(bucket_name: str) -> str:
+    logger.info("Provisioning S3 Bucket: %s", bucket_name)
+    try:
+        s3_client.create_bucket(
+            Bucket=bucket_name, CreateBucketConfiguration={"LocationConstraint": REGION}
+        )
+    except ClientError as e:
+        if e.response["Error"]["Code"] != "BucketAlreadyOwnedByYou":
+            raise
+
+    s3_client.delete_public_access_block(Bucket=bucket_name)
+
+    bucket_policy = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Sid": "PublicReadGetObject",
+                "Effect": "Allow",
+                "Principal": "*",
+                "Action": "s3:GetObject",
+                "Resource": f"arn:aws:s3:::{bucket_name}/*",
+            }
+        ],
+    }
+    s3_client.put_bucket_policy(Bucket=bucket_name, Policy=json.dumps(bucket_policy))
+
+    logger.info("Uploading frontend files to S3...")
+    for root, _, files in os.walk("frontend"):
+        for file in files:
+            local_path = os.path.join(root, file)
+            s3_key = os.path.relpath(local_path, "frontend").replace("\\", "/")
+            content_type, _ = mimetypes.guess_type(local_path)
+            s3_client.upload_file(
+                local_path,
+                bucket_name,
+                s3_key,
+                ExtraArgs={"ContentType": content_type or "text/html"},
+            )
+
+    # Returns the HTTPS REST Endpoint which completely bypasses the mobile ERR_CONNECTION_RESET issue
+    return f"https://{bucket_name}.s3.{REGION}.amazonaws.com/index.html"
+
+
 def main() -> None:
     logger.info("--- Deploying Tuition Desk Cloud Infrastructure ---")
     account_id = sts.get_caller_identity()["Account"]
@@ -243,9 +302,14 @@ def main() -> None:
     }
 
     endpoint = setup_api_gateway(routes, account_id)
+    update_config_js(endpoint)
+
+    frontend_bucket = f"{APP_NAME}-web-{account_id}"
+    frontend_url = deploy_frontend_s3(frontend_bucket)
 
     print("\n================ DEPLOYMENT COMPLETED ================")
     print(f"API Endpoint : {endpoint}")
+    print(f"HTTPS Mobile URL : {frontend_url}")
     print("======================================================\n")
 
 

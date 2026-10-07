@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import re
 import sys
 import time
 from typing import Any
@@ -21,16 +20,6 @@ dynamodb = boto3.resource("dynamodb", region_name=REGION)
 table = dynamodb.Table(TABLE_NAME)
 
 
-def validate_password_strength(pw: str) -> bool:
-    if len(pw) < 8:
-        return False
-    if not re.search(r"[A-Z]", pw):
-        return False
-    if not re.search(r"[a-z]", pw):
-        return False
-    return bool(re.search(r"[0-9]", pw))
-
-
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     http_method = (
         event.get("requestContext", {}).get("http", {}).get("method")
@@ -45,52 +34,69 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     try:
         body = json.loads(event.get("body", "{}")) if event.get("body") else {}
 
-        # 1. Admit Student (Fresh or Legacy)
+        # ==========================================
+        # 1. STUDENT INTAKE, EDIT & DELETE
+        # ==========================================
         if raw_path == "/director/admit-student" and http_method == "POST":
-            sid = str(body.get("id") or int(time.time()))
-            now = int(time.time())
+            sid = str(int(time.time()))
             item = {
                 "PK": f"STUDENT#{sid}",
                 "SK": "PROFILE",
                 "id": sid,
-                "name": body.get("name", "").strip(),
+                "surname": body.get("surname", "").strip(),
+                "givenName": body.get("givenName", "").strip(),
                 "class": str(body.get("class", "10")),
+                "admissionDate": body.get("admissionDate", time.strftime("%Y-%m-%d")),
                 "school": body.get("school", "").strip(),
                 "area": body.get("area", "").strip(),
-                "fatherName": body.get("fatherName", "").strip(),
                 "fatherPhone": body.get("fatherPhone", "").strip(),
-                "motherName": body.get("motherName", "").strip(),
                 "motherPhone": body.get("motherPhone", "").strip(),
                 "primaryContact": body.get("primaryContact", "father"),
-                "primaryPhone": body.get("primaryPhone", "").strip(),
-                "photo": body.get("photo", ""),
+                "expectedTime": body.get("expectedTime", "18:00"),
                 "subjects": body.get("subjects", []),
+                "weakSubjects": body.get("weakSubjects", []),
                 "monthlyFee": int(body.get("monthlyFee", 1500)),
-                "feeStatus": "PAID" if body.get("feePaid", False) else "UNPAID",
-                "admissionDate": body.get("admissionDate", time.strftime("%Y-%m-%d")),
+                "feeStatus": "UNPAID",
                 "status": "ACTIVE",
-                "createdAt": now,
+                "createdAt": int(time.time()),
             }
             table.put_item(Item=item)
-            return api_response(
-                201, {"message": "Student successfully enrolled.", "studentId": sid}
+            return api_response(201, {"message": "Student securely enrolled."})
+
+        if raw_path == "/director/edit-student" and http_method == "POST":
+            sid = body.get("id")
+            if not sid:
+                return api_response(400, {"error": "Student ID required."})
+
+            table.update_item(
+                Key={"PK": f"STUDENT#{sid}", "SK": "PROFILE"},
+                UpdateExpression="SET givenName=:gn, surname=:sn, #cls=:c, area=:a, fatherPhone=:fp, expectedTime=:et, monthlyFee=:mf",
+                ExpressionAttributeNames={"#cls": "class"},
+                ExpressionAttributeValues={
+                    ":gn": body.get("givenName", ""),
+                    ":sn": body.get("surname", ""),
+                    ":c": str(body.get("class", "10")),
+                    ":a": body.get("area", ""),
+                    ":fp": body.get("fatherPhone", ""),
+                    ":et": body.get("expectedTime", "18:00"),
+                    ":mf": int(body.get("monthlyFee", 1500)),
+                },
             )
+            return api_response(200, {"message": "Student profile updated."})
 
-        # 2. Staff Intake (Tutor, Senior Faculty, Associate Director)
+        if raw_path == "/director/delete-student" and http_method == "POST":
+            sid = body.get("id")
+            table.delete_item(Key={"PK": f"STUDENT#{sid}", "SK": "PROFILE"})
+            return api_response(200, {"message": "Student record deleted."})
+
+        # ==========================================
+        # 2. STAFF INTAKE, EDIT & DELETE
+        # ==========================================
         if raw_path == "/director/create-staff" and http_method == "POST":
-            name = body.get("name", "").strip()
             role = body.get("role", "tutor").strip().lower()
-            phone = body.get("phone", "").strip()
-            password = body.get("password", "")
-            specialty = body.get("specialty", "")
-            now = int(time.time())
-
-            if not name or not phone:
-                return api_response(
-                    400, {"error": "Staff name and phone number are required."}
-                )
-
             staff_id = f"STAFF-{int(time.time())}"
+            name = body.get("name", "").strip()
+
             table.put_item(
                 Item={
                     "PK": "STAFF",
@@ -99,54 +105,98 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                     "name": name,
                     "name_lower": name.lower(),
                     "role": role,
-                    "phone": phone,
-                    "password": password,
-                    "specialty": specialty,
-                    "salary": int(body.get("salary", 12000)),
+                    "phone": body.get("phone", "").strip(),
+                    "password": body.get("password", ""),
+                    "classes": body.get("classes", []),
+                    "subjects": body.get("subjects", []),
                     "status": "ACTIVE",
-                    "createdAt": now,
+                    "createdAt": int(time.time()),
                 }
             )
-            return api_response(
-                201, {"message": f"{role.capitalize()} {name} enrolled successfully."}
-            )
+            return api_response(201, {"message": "Staff enrolled."})
 
-        # 3. Staff Management (Deactivate, Relieve)
-        if raw_path == "/director/manage-staff" and http_method == "POST":
-            action = body.get("action")
-            staff_id = body.get("staffId")
-
+        if raw_path == "/director/edit-staff" and http_method == "POST":
+            staff_id = body.get("id")
             if not staff_id:
-                return api_response(400, {"error": "staffId is required."})
+                return api_response(400, {"error": "Staff ID required."})
 
-            if action == "DEACTIVATE":
-                table.update_item(
-                    Key={"PK": "STAFF", "SK": f"USER#{staff_id}"},
-                    UpdateExpression="SET #st = :d, deactivatedAt = :t",
-                    ExpressionAttributeNames={"#st": "status"},
-                    ExpressionAttributeValues={
-                        ":d": "DEACTIVATED",
-                        ":t": int(time.time()),
-                    },
-                )
-                return api_response(
-                    200, {"message": "Staff credentials revoked immediately."}
-                )
+            table.update_item(
+                Key={"PK": "STAFF", "SK": f"USER#{staff_id}"},
+                UpdateExpression="SET #n=:n, phone=:p, classes=:c, subjects=:s",
+                ExpressionAttributeNames={"#n": "name"},
+                ExpressionAttributeValues={
+                    ":n": body.get("name", ""),
+                    ":p": body.get("phone", ""),
+                    ":c": body.get("classes", []),
+                    ":s": body.get("subjects", []),
+                },
+            )
+            return api_response(200, {"message": "Staff profile updated."})
 
-        # 4. Fetch Staff List
-        if raw_path == "/director/staff-list" and http_method == "GET":
-            resp = table.scan(FilterExpression=Attr("PK").eq("STAFF"))
-            return api_response(200, {"staff": resp.get("Items", [])})
+        if raw_path == "/director/delete-staff" and http_method == "POST":
+            staff_id = body.get("id")
+            table.delete_item(Key={"PK": "STAFF", "SK": f"USER#{staff_id}"})
+            return api_response(200, {"message": "Staff permanently deleted."})
 
-        # 5. Fetch All Students (Master Floor Registry)
-        if raw_path == "/director/students" and http_method == "GET":
-            resp = table.scan(
+        # ==========================================
+        # 3. EXPENSES LEDGER (ADD, EDIT, DELETE)
+        # ==========================================
+        if raw_path == "/director/add-expense" and http_method == "POST":
+            exp_id = str(int(time.time()))
+            table.put_item(
+                Item={
+                    "PK": "EXPENSE",
+                    "SK": exp_id,
+                    "id": exp_id,
+                    "description": body.get("description", "Misc"),
+                    "amount": int(body.get("amount", 0)),
+                    "date": body.get("date", time.strftime("%Y-%m-%d")),
+                }
+            )
+            return api_response(201, {"message": "Expense added."})
+
+        if raw_path == "/director/edit-expense" and http_method == "POST":
+            exp_id = body.get("id")
+            table.update_item(
+                Key={"PK": "EXPENSE", "SK": exp_id},
+                UpdateExpression="SET description=:d, amount=:a",
+                ExpressionAttributeValues={
+                    ":d": body.get("description", ""),
+                    ":a": int(body.get("amount", 0)),
+                },
+            )
+            return api_response(200, {"message": "Expense updated."})
+
+        if raw_path == "/director/delete-expense" and http_method == "POST":
+            exp_id = body.get("id")
+            table.delete_item(Key={"PK": "EXPENSE", "SK": exp_id})
+            return api_response(200, {"message": "Expense deleted."})
+
+        # ==========================================
+        # 4. MASTER DATA & OPERATIONS
+        # ==========================================
+        if raw_path == "/director/master-data" and http_method == "GET":
+            stu_resp = table.scan(
                 FilterExpression=Attr("PK").begins_with("STUDENT#")
                 & Attr("SK").eq("PROFILE")
             )
-            return api_response(200, {"students": resp.get("Items", [])})
+            staff_resp = table.scan(FilterExpression=Attr("PK").eq("STAFF"))
+            exp_resp = table.scan(FilterExpression=Attr("PK").eq("EXPENSE"))
+            queue_resp = table.scan(
+                FilterExpression=Attr("PK").eq("DISPATCH")
+                & Attr("status").eq("PENDING")
+            )
 
-        # 6. Single-Tap Toggle Fee Status
+            return api_response(
+                200,
+                {
+                    "students": stu_resp.get("Items", []),
+                    "staff": staff_resp.get("Items", []),
+                    "expenses": exp_resp.get("Items", []),
+                    "queue": queue_resp.get("Items", []),
+                },
+            )
+
         if raw_path == "/director/toggle-fee" and http_method == "POST":
             student_id = body.get("studentId")
             new_status = body.get("feeStatus", "PAID")
@@ -157,27 +207,16 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             )
             return api_response(200, {"message": f"Fee marked {new_status}."})
 
-        # 7. Outbound WhatsApp Review Queue
-        if raw_path == "/director/dispatch-queue" and http_method == "GET":
-            resp = table.scan(
-                FilterExpression=Attr("PK").eq("DISPATCH")
-                & Attr("status").eq("PENDING")
-            )
-            return api_response(200, {"queue": resp.get("Items", [])})
-
-        # 8. Resolve Dispatch Item
-        if raw_path == "/director/dispatch-resolve" and http_method == "POST":
+        if raw_path == "/director/log-reply" and http_method == "POST":
             sk = body.get("SK", "")
+            reply = body.get("reply", "")
             table.update_item(
                 Key={"PK": "DISPATCH", "SK": sk},
-                UpdateExpression="SET #s = :sent, dispatchedAt = :t",
+                UpdateExpression="SET parentReply = :r, #s = :sent",
                 ExpressionAttributeNames={"#s": "status"},
-                ExpressionAttributeValues={
-                    ":sent": "DISPATCHED",
-                    ":t": int(time.time()),
-                },
+                ExpressionAttributeValues={":r": reply, ":sent": "RESOLVED"},
             )
-            return api_response(200, {"message": "Dispatch record settled."})
+            return api_response(200, {"message": "Reply logged & cleared."})
 
         return api_response(404, {"error": f"Endpoint not found: {raw_path}"})
 
