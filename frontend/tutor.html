@@ -1,633 +1,402 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Tuition Desk &bull; Floor Tutor Supervision Desk</title>
-  
-  <!-- Inter & JetBrains Mono Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Font Awesome Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-  
-  <!-- html2pdf.js for Client-Side Dossier Generation -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-  <link rel="stylesheet" href="css/styles.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Tuition Desk &bull; Floor Tutor Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link rel="stylesheet" href="css/styles.css">
 </head>
-<body class="bg-slate-950 text-slate-100 antialiased min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white pb-24">
+<body class="bg-slate-950 text-slate-100 antialiased min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white pb-24 overflow-x-hidden">
 
-  <!-- Mobile-First Sticky Header -->
-  <header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md shadow-xs">
+<div id="custom-alert-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-5 space-y-4">
+        <h3 id="custom-alert-title" class="text-lg font-extrabold text-white">Notice</h3>
+        <p id="custom-alert-message" class="text-sm text-slate-300"></p>
+        <div class="flex justify-end"><button onclick="closeMsg()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs touch-btn">Understood</button></div>
+    </div>
+</div>
+
+<div id="custom-confirm-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-5 space-y-4">
+        <h3 id="custom-confirm-title" class="text-lg font-extrabold text-white">Confirm Action</h3>
+        <p id="custom-confirm-message" class="text-sm text-slate-300"></p>
+        <div class="flex justify-end space-x-2">
+            <button onclick="closeConfirm()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs touch-btn">Cancel</button>
+            <button id="custom-confirm-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs touch-btn">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-40 backdrop-blur-md shadow-xs">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
-      
-      <!-- Brand Identity -->
-      <div class="flex items-center space-x-2.5 min-w-0">
-        <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-700 via-indigo-600 to-indigo-500 text-white flex items-center justify-center font-black text-lg shadow-sm">
-          <i class="fa-solid fa-graduation-cap"></i>
+        <div class="flex items-center space-x-2.5 min-w-0">
+            <div class="w-10 h-10 shrink-0 rounded-xl bg-gradient-to-tr from-indigo-700 via-indigo-600 to-indigo-500 text-white flex items-center justify-center font-black text-lg shadow-sm">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="truncate">
+                <div class="flex items-center space-x-1.5">
+                    <span class="font-extrabold text-white text-sm tracking-tight truncate block">Tuition Desk</span>
+                    <span class="text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/40">Floor Active</span>
+                </div>
+                <p id="tutor-name-display" class="text-[11px] text-slate-400 font-medium truncate">Floor Tutor In-Charge</p>
+            </div>
         </div>
-        <div class="truncate">
-          <div class="flex items-center space-x-1.5">
-            <span class="font-extrabold text-white text-sm tracking-tight truncate block">Tuition Desk</span>
-            <span class="text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/40">Floor Active</span>
-          </div>
-          <p id="tutor-name-display" class="text-[11px] text-slate-400 font-medium truncate">Floor Tutor In-Charge</p>
-        </div>
-      </div>
-
-      <!-- Action Utilities -->
-      <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-        <button onclick="toggleAIDrawer()" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center space-x-1.5 transition touch-btn shadow-md">
-          <i class="fa-solid fa-brain text-amber-300 text-sm"></i>
-          <span>AI Desk</span>
+        <button onclick="logout()" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition-colors" title="Sign Out">
+            <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
         </button>
-        <button onclick="logout()" class="p-2 rounded-xl bg-slate-800 hover:bg-rose-900/40 text-slate-400 hover:text-rose-300 transition" title="Sign Out">
-          <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
-        </button>
-      </div>
-
     </div>
-  </header>
+</header>
 
-  <main class="flex-1 max-w-xl w-full mx-auto px-3 sm:px-4 py-4 space-y-3.5">
-
-    <!-- Top Attendance Metrics Bar -->
-    <div class="grid grid-cols-3 gap-2 text-xs">
-      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-xs">
-        <span class="text-slate-400 font-medium block text-[11px]">Present Today</span>
-        <span class="text-xl sm:text-2xl font-bold text-emerald-400 mt-0.5 block font-mono" id="stat-tutor-present">0</span>
-        <span class="text-[10px] text-emerald-400/80 font-medium hidden sm:inline">Active in study hall</span>
-      </div>
-      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-xs">
-        <span class="text-slate-400 font-medium block text-[11px]">Absent Today</span>
-        <span class="text-xl sm:text-2xl font-bold text-rose-400 mt-0.5 block font-mono" id="stat-tutor-absent">0</span>
-        <span class="text-[10px] text-rose-400/80 font-medium hidden sm:inline">Intimations pending</span>
-      </div>
-      <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-xs">
-        <span class="text-slate-400 font-medium block text-[11px]">Slip Tests Conducted</span>
-        <span class="text-xl sm:text-2xl font-bold text-indigo-400 mt-0.5 block font-mono" id="stat-tutor-tests">0</span>
-        <span class="text-[10px] text-slate-500 hidden sm:inline">Papers evaluated</span>
-      </div>
+<main class="flex-1 max-w-xl w-full mx-auto px-3 sm:px-4 py-4 space-y-3.5">
+    <div class="grid grid-cols-3 gap-2 text-xs text-center">
+        <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-xs">
+            <span class="text-slate-400 font-bold block text-[10px] uppercase">Present Today</span>
+            <span class="text-xl font-bold text-emerald-400 mt-0.5 block font-mono" id="stat-tutor-present">0</span>
+        </div>
+        <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-xs">
+            <span class="text-slate-400 font-bold block text-[10px] uppercase">Absent Today</span>
+            <span class="text-xl font-bold text-rose-400 mt-0.5 block font-mono" id="stat-tutor-absent">0</span>
+        </div>
+        <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-xs">
+            <span class="text-slate-400 font-bold block text-[10px] uppercase">Tests Logged</span>
+            <span class="text-xl font-bold text-indigo-400 mt-0.5 block font-mono" id="stat-tutor-tests">0</span>
+        </div>
     </div>
 
-    <!-- Multi-Class Selector Chips (Tap multiple) -->
     <div class="bg-slate-900 rounded-2xl border border-slate-800 p-3 shadow-xs space-y-2">
-      <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
-        <span>ASSIGNED CLASSES (TAP TO TOGGLE)</span>
-        <span id="selected-class-count" class="text-indigo-400">1 selected</span>
-      </div>
-      <div id="class-chips-wrapper" class="flex flex-wrap gap-1.5"></div>
+        <div class="flex items-center justify-between text-[11px] font-bold text-slate-400">
+            <span>ASSIGNED CLASSES (TAP TO TOGGLE)</span>
+            <span id="selected-class-count" class="text-indigo-400">1 selected</span>
+        </div>
+        <div id="class-chips-wrapper" class="flex flex-wrap gap-1.5"></div>
+        <div class="pt-2 border-t border-slate-800 flex items-center space-x-2">
+            <select id="filter-tutor-gender" onchange="renderRoster()" class="w-1/2 px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-bold focus:outline-none focus:border-indigo-500">
+                <option value="ALL">All Genders</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+            </select>
+            <select id="filter-tutor-percentage" onchange="renderRoster()" class="w-1/2 px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-bold focus:outline-none focus:border-indigo-500">
+                <option value="ALL">All Performances</option>
+                <option value="<50">Needs Attention (< 50%)</option>
+                <option value="50-75">Average (50% - 75%)</option>
+                <option value=">75">Excellent (> 75%)</option>
+            </select>
+        </div>
     </div>
 
-    <!-- Attendance Buckets: Present, Absent, Late -->
     <div class="bg-slate-900 rounded-2xl border border-slate-800 p-3 shadow-xs space-y-2.5">
-      <div class="grid grid-cols-3 p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs font-bold text-slate-400">
-        <button id="tab-btn-present" onclick="switchRosterBucket('present')" class="py-2 rounded-lg bg-indigo-600 text-white shadow-xs transition">
-          Present (<span id="count-present">0</span>)
-        </button>
-        <button id="tab-btn-absent" onclick="switchRosterBucket('absent')" class="py-2 rounded-lg text-slate-400 transition">
-          Absent (<span id="count-absent">0</span>)
-        </button>
-        <button id="tab-btn-late" onclick="switchRosterBucket('late')" class="py-2 rounded-lg text-slate-400 transition">
-          Late (<span id="count-late">0</span>)
-        </button>
-      </div>
-
-      <!-- Live Search & Bulk Dispatch Action -->
-      <div class="flex items-center space-x-2">
-        <div class="relative flex-1">
-          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
-          <input type="text" id="tutor-search-input" oninput="renderRoster()" placeholder="Search student name, school, area..." class="w-full pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500 transition">
-        </div>
-        <button onclick="queueAllAbsenteesToDirector()" class="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition flex items-center space-x-1.5 shadow-xs whitespace-nowrap touch-btn">
-          <i class="fa-brands fa-whatsapp text-sm"></i>
-          <span>Send Absentees</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Student Cards Floor List -->
-    <div id="student-roster-list" class="space-y-2"></div>
-
-  </main>
-
-  <!-- ========================================================================= -->
-  <!-- MODAL: INTERACTIVE STUDENT DOSSIER (ALL 6 DEMO TABS FULLY RESTORED)       -->
-  <!-- ========================================================================= -->
-  <div id="student-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
-    <div class="bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-800 overflow-hidden my-auto text-xs">
-      
-      <!-- Modal Top Details Bar -->
-      <div class="p-3.5 sm:p-4 border-b border-slate-800 bg-slate-900/90 flex items-start justify-between gap-2 shrink-0">
-        <div>
-          <div class="flex flex-wrap items-center gap-2">
-            <h3 id="modal-student-name" class="font-extrabold text-base sm:text-lg text-white">Student Name</h3>
-            <span id="modal-student-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300 font-mono">Class 10</span>
-            <span id="modal-student-school" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300">School (Area)</span>
-          </div>
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 mt-1">
-            <a id="modal-call-father" href="#" class="text-emerald-400 font-semibold hover:underline flex items-center space-x-1">
-              <i class="fa-solid fa-phone text-[10px]"></i>
-              <span id="modal-father-phone">Father: N/A</span>
-            </a>
-            <span>&bull;</span>
-            <a id="modal-call-mother" href="#" class="text-pink-400 font-semibold hover:underline flex items-center space-x-1">
-              <i class="fa-solid fa-phone text-[10px]"></i>
-              <span id="modal-mother-phone">Mother: N/A</span>
-            </a>
-          </div>
+        <div class="grid grid-cols-4 p-1 bg-slate-950 rounded-xl border border-slate-800 text-[10px] font-bold text-slate-400">
+            <button id="tab-btn-present" onclick="switchRosterBucket('present')" class="py-2 rounded-lg bg-indigo-600 text-white shadow-xs transition-colors">Present</button>
+            <button id="tab-btn-absent" onclick="switchRosterBucket('absent')" class="py-2 rounded-lg hover:text-white transition-colors">Absent</button>
+            <button id="tab-btn-late" onclick="switchRosterBucket('late')" class="py-2 rounded-lg hover:text-white transition-colors">Late</button>
+            <button id="tab-btn-early" onclick="switchRosterBucket('early leave')" class="py-2 rounded-lg hover:text-white transition-colors">Early</button>
         </div>
 
-        <div class="flex items-center space-x-1.5 shrink-0">
-          <button onclick="openCustomRangePdfModal()" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs transition flex items-center space-x-1 shadow-xs touch-btn">
-            <i class="fa-solid fa-file-pdf"></i>
-            <span>Dossier PDF</span>
-          </button>
-          <button onclick="closeStudentModal()" class="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800">
-            <i class="fa-solid fa-xmark text-sm"></i>
-          </button>
-        </div>
-      </div>
-
-      <!-- Modal Tabs Bar (Unabridged 6 Sub-Tabs) -->
-      <div class="flex items-center space-x-1 border-b border-slate-800 px-3.5 pt-2 text-[11px] font-bold bg-slate-900/50 overflow-x-auto shrink-0">
-        <button onclick="switchDossierTab('syllabus')" id="dossier-tab-syllabus" class="py-2 px-3 text-indigo-400 border-b-2 border-indigo-500 whitespace-nowrap flex items-center space-x-1">
-          <i class="fa-solid fa-sitemap"></i>
-          <span>Syllabus & Confidence</span>
-        </button>
-        <button onclick="switchDossierTab('assessments')" id="dossier-tab-assessments" class="py-2 px-3 text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center space-x-1">
-          <i class="fa-solid fa-pen-nib"></i>
-          <span>Assessments (Slip & Week Tests)</span>
-        </button>
-        <button onclick="switchDossierTab('doubts')" id="dossier-tab-doubts" class="py-2 px-3 text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center space-x-1">
-          <i class="fa-solid fa-hand-holding-hand text-emerald-400"></i>
-          <span>Faculty Doubt Clearance</span>
-        </button>
-        <button onclick="switchDossierTab('exams')" id="dossier-tab-exams" class="py-2 px-3 text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center space-x-1">
-          <i class="fa-solid fa-stopwatch text-rose-400"></i>
-          <span>Exams & Delta</span>
-        </button>
-        <button onclick="switchDossierTab('progress')" id="dossier-tab-progress" class="py-2 px-3 text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center space-x-1">
-          <i class="fa-solid fa-calendar-days"></i>
-          <span>Monthly Progress Math</span>
-        </button>
-        <button onclick="switchDossierTab('misbehavior')" id="dossier-tab-misbehavior" class="py-2 px-3 text-slate-400 hover:text-slate-200 whitespace-nowrap flex items-center space-x-1">
-          <i class="fa-solid fa-triangle-exclamation text-rose-500"></i>
-          <span>Misbehavior</span>
-        </button>
-      </div>
-
-      <!-- Modal Body (Scrollable) -->
-      <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 flex-1">
-        
-        <!-- SUB-PANEL 1: HIERARCHICAL SYLLABUS, CHAPTER PROGRESSION & DISCRETE CONFIDENCE -->
-        <div id="dossier-panel-syllabus" class="space-y-3">
-          <div>
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="font-bold text-slate-400 uppercase tracking-wider text-[10px]">1. Select Subject:</span>
-              <button onclick="openAddSubjectModal()" class="text-indigo-400 hover:text-indigo-300 font-bold text-[10px]">+ Add Subject</button>
+        <div class="flex items-center space-x-2">
+            <div class="relative flex-1">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                <input type="text" id="tutor-search-input" oninput="renderRoster()" placeholder="Search students..." class="w-full pl-8 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
             </div>
-            <div id="dossier-subjects-list" class="flex flex-wrap gap-1.5"></div>
-          </div>
-
-          <div class="border-t border-slate-800 pt-2.5">
-            <div class="flex items-center justify-between mb-1.5">
-              <span class="font-bold text-slate-400 uppercase tracking-wider text-[10px]">2. Select Chapter / Unit (Ascending Numerical Order):</span>
-              <button onclick="openAddChapterModal()" class="text-indigo-400 hover:text-indigo-300 font-bold text-[10px]">+ Add Chapter</button>
-            </div>
-            <div id="dossier-chapters-list" class="flex flex-wrap gap-1.5"></div>
-          </div>
-
-          <div class="border-t border-slate-800 pt-2.5 space-y-2">
-            <div class="flex items-center justify-between">
-              <div>
-                <h4 id="active-chapter-title" class="font-bold text-white text-xs">Chapter Subtopics & Discrete Confidence</h4>
-                <p class="text-[10px] text-slate-400">1-Tap ratings: 0%, 25%, 50%, 75%, and 100% Fully Prepared.</p>
-              </div>
-              <button onclick="openAddTopicModal()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-[10px]">
-                + Add Subtopic
-              </button>
-            </div>
-
-            <!-- List of Subtopics with Discrete 1-Tap Buttons -->
-            <div id="dossier-topics-list" class="space-y-2"></div>
-          </div>
-        </div>
-
-        <!-- SUB-PANEL 2: CONSOLIDATED ASSESSMENTS (SLIP TESTS + WEEKEND GRAND TEST) -->
-        <div id="dossier-panel-assessments" class="hidden space-y-3.5">
-          <div class="grid grid-cols-2 p-1 bg-slate-950 rounded-xl border border-slate-800 text-[11px] font-bold text-slate-400">
-            <button type="button" id="ass-subtab-slip" onclick="switchAssessmentSubTab('slip')" class="py-1.5 rounded-lg bg-indigo-600 text-white">Daily Slip Test</button>
-            <button type="button" id="ass-subtab-week" onclick="switchAssessmentSubTab('week')" class="py-1.5 rounded-lg text-slate-400">Weekend Grand Test</button>
-          </div>
-
-          <!-- A. SLIP TEST WORKFLOW WITH MULTI-TOPIC SELECTION & PAPER PHOTOS -->
-          <div id="box-slip-test-workflow" class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <span class="font-bold text-white uppercase tracking-wider text-[11px]">Conduct Slip Test & Capture Answer Sheet Proof</span>
-              <span class="text-[10px] text-slate-400">Multi-Page Photos Supported</span>
-            </div>
-
-            <form onsubmit="handleSaveSlipTest(event)" class="space-y-2.5">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-slate-400 font-bold text-[10px] mb-1">1. SUBJECT *</label>
-                  <select id="slip-subject-select" onchange="syncSlipChaptersDropdown()" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs"></select>
-                </div>
-                <div>
-                  <label class="block text-slate-400 font-bold text-[10px] mb-1">2. CHAPTER / UNIT *</label>
-                  <select id="slip-chapter-select" onchange="syncSlipTopicsChecklist()" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs"></select>
-                </div>
-              </div>
-
-              <!-- Multi-Topic Checklist for Combined Slip Tests -->
-              <div>
-                <label class="block text-slate-400 font-bold text-[10px] mb-1">3. TESTED SUBTOPICS (SELECT ALL TESTED) *</label>
-                <div id="slip-topics-checklist" class="p-2.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5 max-h-28 overflow-y-auto"></div>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-slate-400 font-bold text-[10px] mb-1">MARKS SCORED *</label>
-                  <input type="number" id="slip-marks-obtained" step="0.5" required placeholder="18" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs font-mono">
-                </div>
-                <div>
-                  <label class="block text-slate-400 font-bold text-[10px] mb-1">TOTAL MARKS *</label>
-                  <input type="number" id="slip-max-marks" step="0.5" required placeholder="20" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs font-mono">
-                </div>
-              </div>
-
-              <div>
-                <label class="block text-slate-400 font-bold text-[10px] mb-1">DETAILED EVALUATION REMARKS *</label>
-                <input type="text" id="slip-remarks" required placeholder="Calculation speed solid, algebraic signs verified." class="w-full px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs">
-              </div>
-
-              <div>
-                <label class="block text-slate-400 font-bold text-[10px] mb-1">
-                  <i class="fa-solid fa-camera mr-1 text-indigo-400"></i>ATTACH ANSWER SHEET PHOTOS (UP TO 4 PAGES DIRECTLY FROM CAMERA / GALLERY)
-                </label>
-                <input type="file" id="slip-photo-input" accept="image/*" multiple onchange="handleSlipPhotosSelected(event)" class="w-full text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:bg-slate-800 file:text-white">
-                <div id="slip-photos-preview-gallery" class="mt-2 flex items-center space-x-2 overflow-x-auto hidden"></div>
-              </div>
-
-              <div class="flex items-center space-x-2 pt-1">
-                <input type="checkbox" id="slip-send-whatsapp" class="rounded bg-slate-950 border-slate-700 text-indigo-600">
-                <label for="slip-send-whatsapp" class="text-xs text-slate-300">Forward performance intimation to Director WhatsApp queue</label>
-              </div>
-
-              <button type="submit" id="btn-save-slip" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md touch-btn text-xs">
-                Save Slip Test to Database
-              </button>
-            </form>
-          </div>
-
-          <!-- B. WEEKEND GRAND TEST COMPILER -->
-          <div id="box-week-test-workflow" class="hidden bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-2.5">
-            <h4 class="text-xs font-bold text-amber-300 uppercase">Weekend Grand Test Topic Aggregator</h4>
-            <p class="text-[11px] text-slate-300">Select topics studied across all subjects during the week to compose the test:</p>
-            <div id="week-test-topics-checklist" class="p-2.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5 max-h-36 overflow-y-auto"></div>
-
-            <div class="grid grid-cols-2 gap-2">
-              <div>
-                <label class="block text-slate-400 font-bold text-[10px] mb-1">GRAND TEST SCORE *</label>
-                <input type="number" id="week-test-score" required placeholder="42" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs font-mono">
-              </div>
-              <div>
-                <label class="block text-slate-400 font-bold text-[10px] mb-1">TOTAL MARKS *</label>
-                <input type="number" id="week-test-total" value="50" required placeholder="50" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs font-mono">
-              </div>
-            </div>
-
-            <button type="button" onclick="handleSaveWeekTest()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-md touch-btn text-xs">
-              Record Weekend Grand Test Marks
+            <button onclick="queueAllAbsenteesToDirector()" class="px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-colors flex items-center space-x-1.5 shadow-xs touch-btn">
+                <i class="fa-brands fa-whatsapp text-sm"></i><span class="hidden sm:inline">Send Absentees</span>
             </button>
-          </div>
-
-          <!-- Historical Tests Stream -->
-          <div class="space-y-2">
-            <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Historical Tests & Evaluated Answer Sheets</h5>
-            <div id="modal-slip-history" class="space-y-2 max-h-48 overflow-y-auto"></div>
-          </div>
         </div>
+    </div>
 
-        <!-- SUB-PANEL 3: FACULTY DOUBT CLEARANCE LOGS -->
-        <div id="dossier-panel-doubts" class="hidden space-y-3.5">
-          <div class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-2.5">
-            <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
-              <i class="fa-solid fa-hand-holding-hand"></i>
-              <span>Log Cleared Doubt (Senior Faculty Cabin Session)</span>
-            </h4>
-            <form onsubmit="handleFloorLogDoubt(event)" class="space-y-2.5">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                <div>
-                  <label class="block text-[10px] font-bold text-slate-400 mb-1">CLEARED BY SENIOR FACULTY *</label>
-                  <select id="doubt-faculty-select" required class="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs"></select>
+    <div id="student-roster-list" class="space-y-2"></div>
+</main>
+
+<!-- ABSENT REMARKS MODAL -->
+<div id="modal-absent-picker" class="hidden fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3 text-xs shadow-2xl">
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+            <h4 class="font-extrabold text-white text-sm">Log Absent Reason</h4>
+            <button onclick="closeAbsentModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="grid grid-cols-3 gap-2 mb-2">
+            <button type="button" onclick="confirmAbsentSlot('Health')" class="py-2 px-2 bg-slate-800 hover:bg-rose-600 rounded-xl font-bold text-white transition text-center text-[10px]">Health</button>
+            <button type="button" onclick="confirmAbsentSlot('Function')" class="py-2 px-2 bg-slate-800 hover:bg-amber-600 rounded-xl font-bold text-white transition text-center text-[10px]">Function</button>
+            <button type="button" onclick="confirmAbsentSlot('Travel')" class="py-2 px-2 bg-slate-800 hover:bg-indigo-600 rounded-xl font-bold text-white transition text-center text-[10px]">Travel</button>
+        </div>
+        <div class="pt-1">
+            <input type="text" id="custom-absent-input" placeholder="Custom remarks (e.g. Stuck in traffic)..." class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs mb-2">
+            <button type="button" onclick="confirmCustomAbsentSlot()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl touch-btn">Confirm Absence</button>
+        </div>
+    </div>
+</div>
+
+<!-- LATE TIME PICKER MODAL -->
+<div id="modal-late-picker" class="hidden fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3 text-xs shadow-2xl">
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+            <h4 class="font-extrabold text-white text-sm">Select Student Arrival Slot</h4>
+            <button onclick="closeLateModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="pt-1">
+            <label class="block text-[10px] font-bold text-slate-400 mb-1">ACTUAL ARRIVAL TIME</label>
+            <input type="time" id="custom-late-input" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs mb-2 font-mono">
+            <button type="button" onclick="confirmCustomLateSlot()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl touch-btn">Confirm Time</button>
+        </div>
+    </div>
+</div>
+
+<!-- EARLY LEAVE MODAL -->
+<div id="modal-early-picker" class="hidden fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3 text-xs shadow-2xl">
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+            <h4 class="font-extrabold text-white text-sm">Log Early Leave</h4>
+            <button onclick="closeEarlyModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="pt-1">
+            <label class="block text-[10px] font-bold text-slate-400 mb-1">REASON FOR EARLY LEAVE</label>
+            <input type="text" id="custom-early-input" placeholder="e.g. Doctor Appointment" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs mb-2">
+            <button type="button" onclick="confirmCustomEarlySlot()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl touch-btn">Confirm Leave</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: STUDENT DOSSIER -->
+<div id="student-modal" class="hidden fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-slate-900 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-800">
+        
+        <div class="p-3.5 sm:p-4 border-b border-slate-800 bg-slate-900/90 flex items-start justify-between gap-2 shrink-0 rounded-t-3xl">
+            <div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <h3 id="modal-student-name" class="font-extrabold text-base sm:text-lg text-white">Student Name</h3>
+                    <span id="modal-student-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300">Class</span>
+                    <span id="modal-student-school" class="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-slate-300">School</span>
                 </div>
-                <div>
-                  <label class="block text-[10px] font-bold text-slate-400 mb-1">SUBJECT *</label>
-                  <input type="text" id="doubt-subject-input" required placeholder="e.g. Senior Mathematics" class="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs">
+                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400 mt-1">
+                    <a id="modal-call-father" href="#" class="text-emerald-400 font-semibold hover:underline flex items-center"><i class="fa-solid fa-phone text-[10px] mr-1"></i>Father</a>
+                    <span>&bull;</span>
+                    <a id="modal-call-mother" href="#" class="text-pink-400 font-semibold hover:underline flex items-center"><i class="fa-solid fa-phone text-[10px] mr-1"></i>Mother</a>
                 </div>
-              </div>
-
-              <div>
-                <label class="block text-[10px] font-bold text-slate-400 mb-1">CONCEPT / EXERCISE CLARIFIED *</label>
-                <input type="text" id="doubt-concept-input" required placeholder="e.g. Sign errors in discriminant root calculations" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs">
-              </div>
-
-              <div>
-                <label class="block text-[10px] font-bold text-slate-400 mb-1">TEACHER VERIFICATION REMARKS</label>
-                <input type="text" id="doubt-notes-input" placeholder="Solved 3 textbook examples on paper cleanly." class="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs">
-              </div>
-
-              <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-md touch-btn text-xs">
-                Save & Verify Doubt Resolution
-              </button>
-            </form>
-          </div>
-
-          <div class="space-y-2">
-            <h5 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Historical Doubt Clearances</h5>
-            <div id="dossier-doubts-history-list" class="space-y-2"></div>
-          </div>
+            </div>
+            <div class="flex items-center space-x-1.5 shrink-0">
+                <button onclick="openCustomRangePdfModal()" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] shadow-lg touch-btn"><i class="fa-solid fa-file-pdf mr-1.5"></i>PDF</button>
+                <button onclick="closeStudentModal()" class="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800 touch-btn"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
         </div>
 
-        <!-- SUB-PANEL 4: EXAMS & DELTA SCORE ANALYSIS -->
-        <div id="dossier-panel-exams" class="hidden space-y-3">
-          <div class="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-3.5 space-y-2.5">
-            <div class="flex items-center justify-between">
-              <h4 class="text-xs font-bold text-rose-300 uppercase">Upcoming Exam Schedules</h4>
-              <button onclick="promptScheduleExam()" class="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-[10px] font-bold">+ Schedule Exam</button>
-            </div>
-            <div id="modal-exam-schedules" class="space-y-1.5"></div>
-          </div>
-
-          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 space-y-2">
-            <h4 class="text-xs font-bold text-white uppercase">Historical School Exam Results & Delta Progression</h4>
-            <div id="modal-exam-results" class="space-y-1.5"></div>
-          </div>
+        <div class="flex items-center space-x-1 border-b border-slate-800 px-3.5 pt-2 text-[11px] font-bold bg-slate-900/50 overflow-x-auto hide-scrollbar shrink-0">
+            <button onclick="switchDossierTab('attendance')" id="dossier-tab-attendance" class="py-2 px-3 text-indigo-400 border-b-2 border-indigo-500 whitespace-nowrap">Attendance & Conduct</button>
+            <button onclick="switchDossierTab('syllabus')" id="dossier-tab-syllabus" class="py-2 px-3 text-slate-400 hover:text-white whitespace-nowrap">Syllabus & Mastery</button>
+            <button onclick="switchDossierTab('doubts')" id="dossier-tab-doubts" class="py-2 px-3 text-slate-400 hover:text-white whitespace-nowrap">Faculty Interventions</button>
+            <button onclick="switchDossierTab('vault')" id="dossier-tab-vault" class="py-2 px-3 text-slate-400 hover:text-white whitespace-nowrap"><i class="fa-solid fa-vault text-amber-400 mr-1"></i>Vault</button>
+            <button onclick="switchDossierTab('exams')" id="dossier-tab-exams" class="py-2 px-3 text-slate-400 hover:text-white whitespace-nowrap">School Exams & Delta</button>
         </div>
 
-        <!-- SUB-PANEL 5: MONTHLY PROGRESS MATH (INTERACTIVE CALENDAR) -->
-        <div id="dossier-panel-progress" class="hidden space-y-3">
-          <div class="grid grid-cols-4 gap-2 text-center text-xs">
-            <div class="p-2 bg-slate-950 rounded-xl border border-slate-800">
-              <span class="text-[10px] text-slate-400 block uppercase">Total</span>
-              <strong id="cal-total" class="font-mono text-white text-base">30</strong>
+        <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 flex-1 bg-slate-950 rounded-b-3xl">
+            
+            <div id="dossier-panel-attendance" class="space-y-3">
+                <div id="progress-calendar-grid" class="grid grid-cols-7 gap-1.5"></div>
+                <div id="calendar-day-detail-box" class="p-3 bg-slate-900 rounded-xl border border-slate-800 hidden text-xs space-y-1">
+                    <div class="flex items-center justify-between text-indigo-300 font-bold mb-1">
+                        <span id="detail-date-title">Date Inspection</span>
+                        <span id="detail-status-pill" class="px-2 py-0.5 rounded text-[10px]">PRESENT</span>
+                    </div>
+                    <p id="detail-date-notes" class="text-slate-300 text-[11px]"></p>
+                </div>
             </div>
-            <div class="p-2 bg-emerald-500/20 text-emerald-300 rounded-xl border border-emerald-500/30">
-              <span class="text-[10px] block uppercase">Present</span>
-              <strong id="cal-present" class="font-mono text-base">22</strong>
-            </div>
-            <div class="p-2 bg-rose-500/20 text-rose-300 rounded-xl border border-rose-500/30">
-              <span class="text-[10px] block uppercase">Absent</span>
-              <strong id="cal-absent" class="font-mono text-base">2</strong>
-            </div>
-            <div class="p-2 bg-amber-500/20 text-amber-300 rounded-xl border border-amber-500/30">
-              <span class="text-[10px] block uppercase">Holidays</span>
-              <strong id="cal-holidays" class="font-mono text-base">6</strong>
-            </div>
-          </div>
 
-          <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 text-[11px] font-mono text-emerald-400 text-center">
-            22 Present + 2 Absent + 6 Holidays = 30 Total Days (100% Balanced)
-          </div>
-
-          <!-- Calendar Days Grid -->
-          <div class="space-y-1.5 pt-1">
-            <span class="text-[10px] font-bold text-slate-400 uppercase">Tap Date to Inspect Daily Studies & Tests:</span>
-            <div id="progress-calendar-grid" class="grid grid-cols-7 sm:grid-cols-10 gap-1.5"></div>
-          </div>
-
-          <div id="calendar-day-detail-box" class="p-3 bg-slate-950 rounded-xl border border-slate-800 hidden text-xs space-y-1">
-            <div class="flex items-center justify-between text-indigo-300 font-bold">
-              <span id="detail-date-title">Date Inspection</span>
-              <span id="detail-status-pill" class="px-2 py-0.5 rounded text-[10px]">PRESENT</span>
+            <div id="dossier-panel-syllabus" class="hidden space-y-3">
+                <div>
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-slate-400 uppercase tracking-wider text-[10px]">1. Select Subject:</span>
+                        <button onclick="openAddSubjectModal()" class="text-indigo-400 hover:text-indigo-300 font-bold text-[10px]">+ Add Subject</button>
+                    </div>
+                    <div id="dossier-subjects-list" class="flex flex-wrap gap-1.5"></div>
+                </div>
+                <div class="border-t border-slate-800 pt-2.5">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-slate-400 uppercase tracking-wider text-[10px]">2. Select Chapter / Unit:</span>
+                        <button onclick="openAddChapterModal()" class="text-indigo-400 hover:text-indigo-300 font-bold text-[10px]">+ Add Chapter</button>
+                    </div>
+                    <div id="dossier-chapters-list" class="flex flex-wrap gap-1.5"></div>
+                </div>
+                <div class="border-t border-slate-800 pt-2.5 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h4 id="active-chapter-title" class="font-bold text-white text-xs">Chapter Subtopics</h4>
+                            <p class="text-[10px] text-slate-400">1-Tap ratings: 0%, 25%, 50%, 75%, 100%.</p>
+                        </div>
+                        <button onclick="openAddTopicModal()" class="px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-[10px]">+ Add Subtopic</button>
+                    </div>
+                    <div id="dossier-topics-list" class="space-y-2"></div>
+                </div>
             </div>
-            <p id="detail-date-notes" class="text-slate-300 text-[11px]"></p>
-          </div>
+
+            <div id="dossier-panel-doubts" class="hidden space-y-3.5">
+                <div class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-2.5">
+                    <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5"><i class="fa-solid fa-hand-holding-hand"></i><span>Log Faculty Doubt Session</span></h4>
+                    <form onsubmit="handleFloorLogDoubt(event)" class="space-y-2.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div><label class="block text-[10px] font-bold text-slate-400 mb-1">CLEARED BY *</label><select id="doubt-faculty-select" required class="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs"></select></div>
+                            <div><label class="block text-[10px] font-bold text-slate-400 mb-1">SUBJECT *</label><input type="text" id="doubt-subject-input" required placeholder="Subject..." class="w-full px-2.5 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs"></div>
+                        </div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 mb-1">CONCEPT CLARIFIED *</label><input type="text" id="doubt-concept-input" required placeholder="Concept..." class="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs"></div>
+                        <div><label class="block text-[10px] font-bold text-slate-400 mb-1">REMARKS</label><input type="text" id="doubt-notes-input" placeholder="Verification notes..." class="w-full px-3 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs"></div>
+                        <button type="submit" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-md touch-btn text-xs">Log Session</button>
+                    </form>
+                </div>
+                <div id="dossier-doubts-history-list" class="space-y-2"></div>
+            </div>
+
+            <div id="dossier-panel-vault" class="hidden space-y-3.5">
+                <div class="grid grid-cols-2 p-1 bg-slate-950 rounded-xl border border-slate-800 text-[11px] font-bold text-slate-400 mb-2">
+                    <button type="button" id="ass-subtab-slip" onclick="switchAssessmentSubTab('slip')" class="py-1.5 rounded-lg bg-indigo-600 text-white">Log Slip Test</button>
+                    <button type="button" id="ass-subtab-week" onclick="switchAssessmentSubTab('week')" class="py-1.5 rounded-lg">Log Grand Test</button>
+                </div>
+                
+                <div id="box-slip-test-workflow" class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-2.5">
+                    <form onsubmit="handleSaveSlipTest(event)" class="space-y-2.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div><label class="block text-[10px] font-bold text-slate-400 mb-1">SUBJECT *</label><select id="slip-subject-select" onchange="syncSlipChaptersDropdown()" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs"></select></div>
+                            <div><label class="block text-[10px] font-bold text-slate-400 mb-1">CHAPTER *</label><select id="slip-chapter-select" onchange="syncSlipTopicsChecklist()" class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs"></select></div>
+                        </div>
+                        <div>
+                            <label class="block text-slate-400 font-bold text-[10px] mb-1">TESTED SUBTOPICS (MULTI-SELECT)</label>
+                            <div id="slip-topics-checklist" class="p-2.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5 max-h-28 overflow-y-auto"></div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="block text-slate-400 font-bold text-[10px] mb-1">MARKS SCORED *</label><input type="number" id="slip-marks-obtained" step="0.5" required class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs font-mono"></div>
+                            <div><label class="block text-slate-400 font-bold text-[10px] mb-1">TOTAL MARKS *</label><input type="number" id="slip-max-marks" step="0.5" required class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs font-mono"></div>
+                        </div>
+                        <div><label class="block text-slate-400 font-bold text-[10px] mb-1">REMARKS *</label><input type="text" id="slip-remarks" required class="w-full px-3 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs"></div>
+                        <div>
+                            <label class="block text-slate-400 font-bold text-[10px] mb-1"><i class="fa-solid fa-camera mr-1 text-indigo-400"></i>ATTACH PHOTOS</label>
+                            <input type="file" id="slip-photo-input" accept="image/*" multiple onchange="handleSlipPhotosSelected(event)" class="w-full text-[11px] text-slate-400 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:bg-slate-800 file:text-white">
+                            <div id="slip-photos-preview-gallery" class="mt-2 flex items-center space-x-2 overflow-x-auto hidden"></div>
+                        </div>
+                        <button type="submit" id="btn-save-slip" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md touch-btn text-xs">Save Test to Database</button>
+                    </form>
+                </div>
+
+                <div id="box-week-test-workflow" class="hidden bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-2.5">
+                    <h4 class="text-xs font-bold text-amber-300 uppercase">Weekend Grand Test Aggregator</h4>
+                    <div id="week-test-topics-checklist" class="p-2.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5 max-h-36 overflow-y-auto"></div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div><label class="block text-slate-400 font-bold text-[10px] mb-1">SCORE *</label><input type="number" id="week-test-score" required class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs font-mono"></div>
+                        <div><label class="block text-slate-400 font-bold text-[10px] mb-1">TOTAL *</label><input type="number" id="week-test-total" value="50" required class="w-full px-2.5 py-1.5 rounded-xl border border-slate-700 bg-slate-950 text-white text-xs font-mono"></div>
+                    </div>
+                    <button type="button" onclick="handleSaveWeekTest()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl shadow-md touch-btn text-xs">Record Grand Test</button>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Answer Sheet Vault</h4>
+                    <select id="vault-test-selector" onchange="renderVaultTest()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-bold focus:border-indigo-500 mb-3"></select>
+                    <div id="vault-test-display" class="space-y-3"></div>
+                </div>
+            </div>
+
+            <div id="dossier-panel-exams" class="hidden space-y-3">
+                <form onsubmit="handleLogSchoolExam(event)" class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-2">
+                    <h4 class="text-xs font-bold text-rose-300 uppercase">Log School Exam Marks</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="text" id="exam-name" required placeholder="Exam (e.g. Half Yearly)" class="px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs">
+                        <input type="text" id="exam-subject" required placeholder="Subject (e.g. Science)" class="px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <input type="number" id="exam-scored" required placeholder="Marks Scored" class="px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs font-mono">
+                        <input type="number" id="exam-total" required placeholder="Total Marks" class="px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs font-mono">
+                    </div>
+                    <button type="submit" class="w-full py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs rounded-xl touch-btn transition-colors">Log Exam Results</button>
+                </form>
+                <div id="modal-exam-results" class="space-y-2"></div>
+            </div>
+
         </div>
-
-        <!-- SUB-PANEL 6: MISBEHAVIOR ESCALATION -->
-        <div id="dossier-panel-misbehavior" class="hidden space-y-3">
-          <div class="bg-rose-500/10 border border-rose-500/30 rounded-2xl p-3.5 space-y-2.5">
-            <div class="flex items-center space-x-2 text-rose-300">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <h4 class="font-bold text-xs uppercase">Internal Student Discipline Escalation</h4>
-            </div>
-            <form onsubmit="handleLogMisbehavior(event)" class="space-y-2.5">
-              <input type="text" id="incident-category" required placeholder="Category (e.g. Disturbing batch, Mobile distraction)" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs">
-              <textarea id="incident-details" required rows="2" placeholder="Details for Director review..." class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs"></textarea>
-              <button type="submit" class="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs touch-btn">
-                Escalate to Director WhatsApp Queue
-              </button>
-            </form>
-          </div>
-        </div>
-
-      </div>
-
     </div>
-  </div>
+</div>
 
-  <!-- ========================================================================= -->
-  <!-- MODAL: DATE-RANGE DOSSIER PDF GENERATOR (UNABRIDGED HTML2PDF)              -->
-  <!-- ========================================================================= -->
-  <div id="modal-range-pdf" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3">
+<div id="modal-range-pdf" class="hidden fixed inset-0 z-[70] bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3">
     <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3 text-xs shadow-2xl">
-      <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-        <h4 class="font-extrabold text-white text-sm">Download Academic Dossier PDF</h4>
-        <button onclick="closeCustomRangePdfModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <p class="text-[11px] text-slate-300">Select period (restricted up to today's date):</p>
-      <div class="grid grid-cols-2 gap-2">
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 mb-1">START DATE</label>
-          <input type="date" id="pdf-start-date" value="2026-09-01" class="w-full px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-xs">
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+            <h4 class="font-extrabold text-white text-sm">Generate Dossier PDF</h4>
+            <button onclick="closeCustomRangePdfModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 mb-1">END DATE</label>
-          <input type="date" id="pdf-end-date" value="2026-10-03" class="w-full px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-xs">
+        <div class="grid grid-cols-2 gap-2">
+            <div><label class="block text-[10px] font-bold text-slate-400 mb-1">START DATE</label><input type="date" id="pdf-start-date" class="w-full px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-xs"></div>
+            <div><label class="block text-[10px] font-bold text-slate-400 mb-1">END DATE</label><input type="date" id="pdf-end-date" class="w-full px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-xs"></div>
         </div>
-      </div>
-      <button type="button" onclick="executeDossierPdfExport()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md touch-btn">
-        Generate & Download Official PDF
-      </button>
+        <button type="button" onclick="executeDossierPdfExport()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl mt-2 touch-btn shadow-md">Download PDF</button>
     </div>
-  </div>
+</div>
 
-  <!-- HIDDEN PRINT CONTAINER FOR HTML2PDF -->
-  <div id="printable-pdf-dossier" class="hidden bg-white text-slate-900 p-8 text-xs font-sans max-w-2xl mx-auto space-y-4">
-    <div class="border-b-2 border-indigo-700 pb-3 flex items-center justify-between">
-      <div>
-        <h1 class="text-xl font-extrabold text-indigo-900 uppercase">Tuition Desk</h1>
-        <p class="text-xs text-slate-600 font-semibold">Institutional Academic Supervision & Progress Dossier</p>
-      </div>
-      <div class="text-right">
-        <span class="px-2 py-0.5 bg-indigo-50 text-indigo-700 font-bold rounded border border-indigo-200 uppercase text-[10px]">Official Dossier</span>
-        <span id="pdf-print-range" class="text-[10px] text-slate-400 block mt-1">Period: Sep 1 - Oct 3, 2026</span>
-      </div>
+<div id="printable-pdf-dossier" class="hidden bg-white text-slate-900 p-8 text-xs font-sans max-w-3xl mx-auto space-y-6">
+    <div class="border-b-4 border-indigo-700 pb-4 flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-extrabold text-indigo-900 uppercase tracking-tight">Tuition Desk</h1>
+            <p class="text-[11px] text-slate-600 font-bold uppercase tracking-widest mt-1">Official Parent-Teacher Meeting Dossier</p>
+        </div>
+        <div class="text-right">
+            <span class="px-3 py-1 bg-indigo-50 text-indigo-800 font-extrabold rounded-lg border border-indigo-200 uppercase tracking-wider text-[10px]">Confidential</span>
+            <span id="pdf-print-range" class="text-[10px] font-bold text-slate-500 block mt-2"></span>
+        </div>
     </div>
-
-    <div class="grid grid-cols-2 gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-      <div>
-        <p><strong>Student Name:</strong> <span id="pdf-print-name"></span></p>
-        <p><strong>Class & Stream:</strong> <span id="pdf-print-class"></span></p>
-        <p><strong>School & Area:</strong> <span id="pdf-print-school"></span></p>
-      </div>
-      <div>
-        <p><strong>Father Phone:</strong> <span id="pdf-print-father"></span></p>
-        <p><strong>Mother Phone:</strong> <span id="pdf-print-mother"></span></p>
-        <p><strong>Evaluation Status:</strong> <span class="text-emerald-700 font-bold">Good Standing</span></p>
-      </div>
+    <div class="grid grid-cols-2 gap-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl shadow-sm">
+        <div class="space-y-1">
+            <p><strong class="text-slate-500 uppercase text-[10px]">Student Name</strong><br><span id="pdf-print-name" class="font-extrabold text-sm text-slate-800"></span></p>
+            <p><strong class="text-slate-500 uppercase text-[10px]">Class & Area</strong><br><span id="pdf-print-class" class="font-bold text-slate-700"></span></p>
+        </div>
+        <div class="space-y-1 text-right">
+            <p><strong class="text-slate-500 uppercase text-[10px]">Father Contact</strong><br><span id="pdf-print-father" class="font-mono text-slate-700"></span></p>
+            <p><strong class="text-slate-500 uppercase text-[10px]">Mother Contact</strong><br><span id="pdf-print-mother" class="font-mono text-slate-700"></span></p>
+        </div>
     </div>
+    <div><h3 class="font-extrabold text-sm uppercase text-indigo-900 border-b-2 border-slate-200 pb-1 mb-2">1. Tuition Test Performance (Thumbnails)</h3><div id="pdf-print-tests" class="space-y-3"></div></div>
+    <div><h3 class="font-extrabold text-sm uppercase text-indigo-900 border-b-2 border-slate-200 pb-1 mb-2">2. School Exam Progress & Delta</h3><div id="pdf-print-exams" class="space-y-2"></div></div>
+</div>
 
-    <div>
-      <h3 class="font-bold text-xs uppercase text-slate-900 border-b border-slate-200 pb-1 mb-1.5">1. Attendance Math Breakdown</h3>
-      <div class="p-2 border border-slate-200 rounded bg-slate-50 text-center font-mono text-[11px]">
-        Reconciled Math: 22 Days Present &bull; 2 Days Absent &bull; 6 Holidays = 30 Total Days (100% Balanced)
-      </div>
-    </div>
-
-    <div>
-      <h3 class="font-bold text-xs uppercase text-slate-900 border-b border-slate-200 pb-1 mb-1.5">2. Syllabus Topic Confidence & Mastery Map</h3>
-      <div id="pdf-print-syllabus" class="space-y-1.5"></div>
-    </div>
-
-    <div>
-      <h3 class="font-bold text-xs uppercase text-slate-900 border-b border-slate-200 pb-1 mb-1.5">3. Slip Test Marks & Progress Progression (&Delta;)</h3>
-      <div id="pdf-print-tests" class="space-y-1"></div>
-    </div>
-
-    <div class="pt-4 border-t border-slate-200 flex justify-between text-[10px] text-slate-500">
-      <span>Tuition Desk Academic Floor Verification</span>
-      <span>Authorized Signature &bull; Office of the Director</span>
-    </div>
-  </div>
-
-  <!-- IN-APP MODAL: LATE TIME PICKER -->
-  <div id="modal-late-picker" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-end sm:items-center justify-center p-3">
+<div id="modal-add-chapter" class="hidden fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3">
     <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3 text-xs shadow-2xl">
-      <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-        <h4 class="font-extrabold text-white text-sm">Select Student Arrival Slot</h4>
-        <button onclick="closeLateModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="grid grid-cols-2 gap-2">
-        <button type="button" onclick="confirmLateSlot('6:30 PM')" class="py-2.5 px-3 bg-slate-800 hover:bg-indigo-600 rounded-xl font-bold text-white transition text-center">6:30 PM</button>
-        <button type="button" onclick="confirmLateSlot('7:00 PM')" class="py-2.5 px-3 bg-slate-800 hover:bg-indigo-600 rounded-xl font-bold text-white transition text-center">7:00 PM</button>
-        <button type="button" onclick="confirmLateSlot('7:30 PM')" class="py-2.5 px-3 bg-slate-800 hover:bg-indigo-600 rounded-xl font-bold text-white transition text-center">7:30 PM</button>
-        <button type="button" onclick="confirmLateSlot('8:00 PM')" class="py-2.5 px-3 bg-slate-800 hover:bg-indigo-600 rounded-xl font-bold text-white transition text-center">8:00 PM</button>
-      </div>
-      <div class="pt-1">
-        <input type="text" id="custom-late-input" placeholder="Or enter specific time (e.g. 6:45 PM)..." class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs mb-2">
-        <button type="button" onclick="confirmCustomLateSlot()" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl">Confirm Time</button>
-      </div>
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+            <h4 class="font-extrabold text-white text-sm">Add Chapter / Unit</h4>
+            <button onclick="closeAddChapterModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="space-y-2.5">
+            <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Chapter Number</label><input type="number" id="input-chapter-num" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono"></div>
+            <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Chapter Name / Title</label><input type="text" id="input-chapter-name" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"></div>
+            <button type="button" onclick="confirmAddChapter()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md touch-btn">Save Chapter</button>
+        </div>
     </div>
-  </div>
+</div>
 
-  <!-- IN-APP MODAL: ADD CHAPTER -->
-  <div id="modal-add-chapter" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3">
+<div id="modal-add-topic" class="hidden fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3">
     <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3 text-xs shadow-2xl">
-      <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-        <h4 class="font-extrabold text-white text-sm">Add Chapter / Unit</h4>
-        <button onclick="closeAddChapterModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-2.5">
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Chapter Number (For Ascending Order) *</label>
-          <input type="number" id="input-chapter-num" required placeholder="e.g. 1, 2, 3..." class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono">
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+            <h4 class="font-extrabold text-white text-sm">Add Subtopic</h4>
+            <button onclick="closeAddTopicModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Chapter Name / Title *</label>
-          <input type="text" id="input-chapter-name" required placeholder="e.g. Quadratic Equations" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+        <div class="space-y-2.5">
+            <div><label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Subtopic Title</label><input type="text" id="input-topic-name" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"></div>
+            <button type="button" onclick="confirmAddTopic()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md touch-btn">Add Subtopic</button>
         </div>
-        <button type="button" onclick="confirmAddChapter()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md touch-btn">
-          Save Chapter in Sequence
-        </button>
-      </div>
     </div>
-  </div>
+</div>
 
-  <!-- IN-APP MODAL: ADD SUBTOPIC -->
-  <div id="modal-add-topic" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3">
+<div id="modal-add-subject" class="hidden fixed inset-0 z-[80] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-3">
     <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3 text-xs shadow-2xl">
-      <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-        <h4 class="font-extrabold text-white text-sm">Add Subtopic / Exercise</h4>
-        <button onclick="closeAddTopicModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-2.5">
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Subtopic Title *</label>
-          <input type="text" id="input-topic-name" required placeholder="e.g. Nature of Roots & Discriminant" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+        <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+            <h4 class="font-extrabold text-white text-sm">Add Subject</h4>
+            <button onclick="closeAddSubjectModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Initial Confidence Rating</label>
-          <select id="input-topic-confidence" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
-            <option value="50">50% Half Prepared</option>
-            <option value="25">25% Started</option>
-            <option value="0">0% Not Started</option>
-            <option value="75">75% Advanced</option>
-            <option value="100">100% Fully Confident</option>
-          </select>
+        <div class="space-y-2.5">
+            <input type="text" id="input-subject-name" required placeholder="Subject name..." class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
+            <button type="button" onclick="confirmAddSubject()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md touch-btn">Add Subject</button>
         </div>
-        <button type="button" onclick="confirmAddTopic()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md touch-btn">
-          Add Subtopic
-        </button>
-      </div>
     </div>
-  </div>
+</div>
 
-  <!-- IN-APP MODAL: ADD SUBJECT -->
-  <div id="modal-add-subject" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3">
-    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3 text-xs shadow-2xl">
-      <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-        <h4 class="font-extrabold text-white text-sm">Add Additional Subject</h4>
-        <button onclick="closeAddSubjectModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="space-y-2.5">
-        <input type="text" id="input-subject-name" required placeholder="e.g. Social Studies, Computer Science" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
-        <button type="button" onclick="confirmAddSubject()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-md touch-btn">
-          Add Subject to Student
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- IN-APP MODAL: QUICK DISCIPLINE -->
-  <div id="modal-quick-discipline" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3">
-    <div class="w-full max-w-sm bg-slate-900 border border-rose-500/30 rounded-3xl p-4 space-y-3 text-xs shadow-2xl">
-      <div class="flex items-center justify-between pb-1 border-b border-slate-800 text-rose-300">
-        <h4 class="font-extrabold text-sm flex items-center space-x-1.5">
-          <i class="fa-solid fa-triangle-exclamation"></i>
-          <span>Escalate Misbehavior to Director</span>
-        </h4>
-        <button onclick="closeQuickDisciplineModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <p id="discipline-student-label" class="text-[11px] text-slate-300 font-semibold"></p>
-      <form onsubmit="handleQuickDisciplineSubmit(event)" class="space-y-2.5">
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Reason Category *</label>
-          <input type="text" id="quick-disc-category" required placeholder="e.g. Disturbing batch study, phone use..." class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Details for Director Counseling *</label>
-          <textarea id="quick-disc-details" required rows="2" placeholder="Brief note explaining incident..." class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white"></textarea>
-        </div>
-        <button type="submit" class="w-full py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl shadow-md touch-btn">
-          Send to Director WhatsApp Queue
-        </button>
-      </form>
-    </div>
-  </div>
-
-  <script src="js/config.js"></script>
-  <script src="js/api.js"></script>
-  <script src="js/auth.js"></script>
-  <script src="js/ai.js"></script>
-  <script src="js/tutor.js"></script>
+<script src="js/config.js"></script>
+<script src="js/api.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/tutor.js"></script>
 </body>
 </html>

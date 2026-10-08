@@ -1,526 +1,573 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Tuition Desk &bull; Director Executive Console</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<link rel="stylesheet" href="css/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Tuition Desk &bull; Director Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <link rel="stylesheet" href="css/styles.css">
 </head>
 <body class="bg-slate-950 text-slate-100 antialiased min-h-screen flex flex-col selection:bg-indigo-600 selection:text-white overflow-x-hidden">
 
-<!-- Custom Alert Modal -->
-<div id="custom-alert-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-5 space-y-4">
-        <h3 id="custom-alert-title" class="text-lg font-extrabold text-white">Notice</h3>
-        <p id="custom-alert-message" class="text-sm text-slate-300"></p>
-        <div class="flex justify-end">
-            <button onclick="closeMsg()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs touch-btn">Understood</button>
-        </div>
+  <!-- Custom Alert Modal -->
+  <div id="custom-alert-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm shadow-2xl p-6 space-y-4">
+      <h3 id="custom-alert-title" class="text-lg font-extrabold text-white">Notice</h3>
+      <p id="custom-alert-message" class="text-sm text-slate-300"></p>
+      <div class="flex justify-end pt-2">
+        <button onclick="closeMsg()" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs touch-btn">Understood</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Custom Confirm Modal -->
-<div id="custom-confirm-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-5 space-y-4">
-        <h3 id="custom-confirm-title" class="text-lg font-extrabold text-white">Confirm Action</h3>
-        <p id="custom-confirm-message" class="text-sm text-slate-300"></p>
-        <div class="flex justify-end space-x-2">
-            <button onclick="closeConfirm()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs touch-btn">Cancel</button>
-            <button id="custom-confirm-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs touch-btn">Confirm</button>
-        </div>
+  <!-- Custom Confirm Modal -->
+  <div id="custom-confirm-modal" class="hidden fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm shadow-2xl p-6 space-y-4">
+      <h3 id="custom-confirm-title" class="text-lg font-extrabold text-white">Confirm Action</h3>
+      <p id="custom-confirm-message" class="text-sm text-slate-300"></p>
+      <div class="flex justify-end space-x-3 pt-2">
+        <button onclick="closeConfirm()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs touch-btn">Cancel</button>
+        <button id="custom-confirm-btn" class="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs touch-btn">Confirm</button>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- Sidebar Navigation -->
-<div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden transition-opacity"></div>
-<aside id="sidebar-menu" class="fixed top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
-    <div class="p-4 border-b border-slate-800 flex justify-between items-center">
-        <div class="flex items-center space-x-2">
-            <div class="w-8 h-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white"><i class="fa-solid fa-graduation-cap"></i></div>
-            <span class="font-extrabold text-white">Menu</span>
-        </div>
-        <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+  <!-- Sidebar Navigation -->
+  <div id="sidebar-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 hidden transition-opacity"></div>
+  <aside id="sidebar-menu" class="fixed top-0 left-0 h-full w-64 bg-slate-900 border-r border-slate-800 z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="p-5 border-b border-slate-800 flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white"><i class="fa-solid fa-graduation-cap"></i></div>
+        <span class="font-extrabold text-white text-lg">Menu</span>
+      </div>
+      <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white p-2"><i class="fa-solid fa-xmark text-xl"></i></button>
     </div>
-    <nav class="flex-1 p-3 space-y-1">
-        <button onclick="openDirectorView('dashboard')" class="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-800 text-slate-300 hover:text-white text-sm font-bold transition-colors">
-            <i class="fa-solid fa-chart-pie w-5 text-indigo-400"></i><span>Live Metrics</span>
-        </button>
-        <button onclick="openDirectorView('dispatches')" class="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-800 text-slate-300 hover:text-white text-sm font-bold transition-colors">
-            <i class="fa-brands fa-whatsapp w-5 text-rose-400"></i><span>Queues</span>
-        </button>
-        <button onclick="openDirectorView('intake')" class="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-800 text-slate-300 hover:text-white text-sm font-bold transition-colors">
-            <i class="fa-solid fa-user-plus w-5 text-emerald-400"></i><span>Admissions / Intake</span>
-        </button>
-        <button onclick="openDirectorView('fees-salaries')" class="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-800 text-slate-300 hover:text-white text-sm font-bold transition-colors">
-            <i class="fa-solid fa-indian-rupee-sign w-5 text-amber-400"></i><span>Ledger & Payroll</span>
-        </button>
-        <button onclick="openDirectorView('security-portal')" class="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-slate-800 text-slate-300 hover:text-white text-sm font-bold transition-colors">
-            <i class="fa-solid fa-shield-halved w-5 text-cyan-400"></i><span>Security</span>
-        </button>
+    <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+      <button onclick="openDirectorView('dashboard')" class="w-full flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-800 text-slate-300 hover:text-white text-sm font-bold transition-colors">
+        <i class="fa-solid fa-chart-pie w-5 text-indigo-400 text-lg"></i><span>Dashboard</span>
+      </button>
+      <button onclick="openDirectorView('dispatches')" class="w-full flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-800 text-slate-300 hover:text-white text-sm font-bold transition-colors">
+        <i class="fa-brands fa-whatsapp w-5 text-rose-400 text-lg"></i><span>WhatsApp Queues</span>
+      </button>
+      <button onclick="openDirectorView('intake')" class="w-full flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-800 text-slate-300 hover:text-white text-sm font-bold transition-colors">
+        <i class="fa-solid fa-user-plus w-5 text-emerald-400 text-lg"></i><span>Admissions & Staff</span>
+      </button>
+      <button onclick="openDirectorView('fees-salaries')" class="w-full flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-800 text-slate-300 hover:text-white text-sm font-bold transition-colors">
+        <i class="fa-solid fa-indian-rupee-sign w-5 text-amber-400 text-lg"></i><span>Ledger & Payroll</span>
+      </button>
+      <button onclick="openDirectorView('holidays')" class="w-full flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-800 text-slate-300 hover:text-white text-sm font-bold transition-colors">
+        <i class="fa-solid fa-calendar-day w-5 text-pink-400 text-lg"></i><span>Holidays</span>
+      </button>
+      <button onclick="openDirectorView('security-portal')" class="w-full flex items-center space-x-4 p-3.5 rounded-2xl hover:bg-slate-800 text-slate-300 hover:text-white text-sm font-bold transition-colors">
+        <i class="fa-solid fa-shield-halved w-5 text-cyan-400 text-lg"></i><span>Security</span>
+      </button>
     </nav>
-</aside>
+  </aside>
 
-<!-- Header -->
-<header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-md shadow-xs">
-    <div class="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-2">
-        <div class="flex items-center space-x-3 min-w-0">
-            <button onclick="toggleSidebar()" class="p-2 text-slate-300 hover:text-white focus:outline-none">
-                <i class="fa-solid fa-bars text-xl"></i>
-            </button>
-            <div class="truncate">
-                <div class="flex items-center space-x-1.5">
-                    <span class="font-extrabold text-white text-sm tracking-tight truncate block">Tuition Desk</span>
-                    <span id="role-badge" class="text-[10px] font-semibold bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full border border-indigo-500/30">Director</span>
-                </div>
-                <p class="text-[11px] text-slate-400 font-medium truncate">Office of the Managing Director</p>
-            </div>
+  <!-- Top Header -->
+  <header class="bg-slate-900/95 border-b border-slate-800 sticky top-0 z-30 backdrop-blur-md shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <div class="flex items-center space-x-4 min-w-0">
+        <button onclick="toggleSidebar()" class="p-2 text-slate-300 hover:text-white focus:outline-none">
+          <i class="fa-solid fa-bars text-xl"></i>
+        </button>
+        <div class="truncate">
+          <div class="flex items-center space-x-2">
+            <span class="font-extrabold text-white text-base tracking-tight truncate block">Tuition Desk</span>
+            <span id="role-badge" class="text-[10px] font-bold bg-indigo-500/20 text-indigo-300 px-2.5 py-1 rounded-md border border-indigo-500/30">Director</span>
+          </div>
         </div>
-        <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-            <button onclick="toggleAIDrawer()" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white flex items-center transition-colors shadow-lg shadow-indigo-500/20">
-                <i class="fa-solid fa-brain text-amber-300 text-sm"></i><span class="hidden sm:inline-block ml-1.5 text-xs font-bold">AI Desk</span>
-            </button>
-            <button onclick="logout()" class="p-2 rounded-xl bg-slate-800 text-slate-400 hover:text-rose-400"><i class="fa-solid fa-arrow-right-from-bracket text-sm"></i></button>
-        </div>
+      </div>
+      <button onclick="logout()" class="p-2.5 rounded-xl bg-slate-800 text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors touch-btn">
+        <i class="fa-solid fa-arrow-right-from-bracket text-base"></i>
+      </button>
     </div>
-</header>
+  </header>
 
-<main class="flex-1 max-w-3xl w-full mx-auto px-3 sm:px-4 py-4 space-y-4">
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
 
-    <!-- VIEW 1: LIVE METRICS -->
-    <div id="view-dashboard" class="space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h2 class="text-sm font-extrabold text-white uppercase tracking-wider">Live Metrics</h2>
-            <button onclick="loadDashboardData()" class="text-xs text-indigo-400 font-bold"><i class="fa-solid fa-arrows-rotate mr-1"></i> Sync</button>
+    <!-- VIEW 1: DASHBOARD -->
+    <div id="view-dashboard" class="space-y-6">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-base font-extrabold text-white uppercase tracking-wider">Live Dashboard</h2>
+        <button onclick="loadDashboardData()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-indigo-400 font-bold touch-btn transition-colors"><i class="fa-solid fa-arrows-rotate mr-1.5"></i> Sync</button>
+      </div>
+
+      <div class="grid grid-cols-3 gap-3 text-center">
+        <div class="p-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-sm">
+          <span class="text-slate-400 block text-[11px] uppercase font-bold tracking-wider">Students</span>
+          <span id="dash-total-students" class="text-2xl font-mono font-black text-indigo-400 mt-1 block">0</span>
         </div>
+        <div class="p-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-sm">
+          <span class="text-slate-400 block text-[11px] uppercase font-bold tracking-wider">Active Tutors</span>
+          <span id="dash-total-tutors" class="text-2xl font-mono font-black text-emerald-400 mt-1 block">0</span>
+        </div>
+        <div class="p-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-sm">
+          <span class="text-slate-400 block text-[11px] uppercase font-bold tracking-wider">Faculty</span>
+          <span id="dash-total-faculty" class="text-2xl font-mono font-black text-amber-400 mt-1 block">0</span>
+        </div>
+      </div>
 
-        <div class="grid grid-cols-3 gap-2 text-center text-xs">
-            <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-xs">
-                <span class="text-slate-400 block text-[10px] uppercase font-bold">Total Students</span>
-                <span id="dash-total-students" class="text-xl font-mono font-bold text-indigo-400 mt-0.5 block">0</span>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <input type="date" id="filter-date" onchange="renderStudentsList()" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs font-mono font-bold">
+        <select id="filter-class" onchange="renderStudentsList()" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs font-bold">
+          <option value="ALL">All Classes</option>
+          <option value="1">Class 1</option><option value="2">Class 2</option><option value="3">Class 3</option>
+          <option value="4">Class 4</option><option value="5">Class 5</option><option value="6">Class 6</option>
+          <option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option>
+          <option value="10">Class 10</option><option value="Inter 1">Inter 1st Year</option><option value="Inter 2">Inter 2nd Year</option>
+          <option value="B.Tech">B.Tech</option>
+        </select>
+        <select id="filter-gender" onchange="renderStudentsList()" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs font-bold">
+          <option value="ALL">All Genders</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+        <select id="filter-percentage" onchange="renderStudentsList()" class="w-full px-3 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs font-bold">
+          <option value="ALL">All Scores</option>
+          <option value="<50">Below 50%</option>
+          <option value="50-75">50% - 75%</option>
+          <option value=">75">Above 75%</option>
+        </select>
+      </div>
+
+      <div class="grid grid-cols-3 p-1.5 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold text-slate-400">
+        <button id="dash-tab-students" onclick="switchPillar('students')" class="py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-colors">Students</button>
+        <button id="dash-tab-tutors" onclick="switchPillar('tutors')" class="py-2.5 rounded-lg hover:text-white transition-colors">Tutors</button>
+        <button id="dash-tab-faculty" onclick="switchPillar('faculty')" class="py-2.5 rounded-lg hover:text-white transition-colors">Faculty</button>
+      </div>
+
+      <div id="dash-panel-students" class="space-y-4">
+        <div class="flex flex-wrap gap-2 text-[11px] font-bold">
+          <button onclick="filterBucket('ALL')" id="bucket-ALL" class="px-4 py-2 rounded-lg bg-indigo-600 text-white shadow-sm transition-colors">All</button>
+          <button onclick="filterBucket('PRESENT')" id="bucket-PRESENT" class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors">Present</button>
+          <button onclick="filterBucket('ABSENT')" id="bucket-ABSENT" class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors">Absent</button>
+          <button onclick="filterBucket('LATE')" id="bucket-LATE" class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors">Late</button>
+          <button onclick="filterBucket('EARLY')" id="bucket-EARLY" class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors">Early</button>
+          <button onclick="filterBucket('UNMARKED')" id="bucket-UNMARKED" class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors">Unmarked ⚠️</button>
+          <button onclick="filterBucket('LEFT')" id="bucket-LEFT" class="px-4 py-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors">Left Tuition</button>
+        </div>
+        <div id="list-students" class="space-y-3"></div>
+      </div>
+
+      <div id="dash-panel-tutors" class="hidden space-y-4">
+        <div id="list-tutors" class="space-y-3"></div>
+      </div>
+
+      <div id="dash-panel-faculty" class="hidden space-y-4">
+        <div id="list-faculty" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <!-- VIEW 2: QUEUES -->
+    <div id="view-dispatches" class="hidden space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-base font-extrabold text-white uppercase tracking-wider">WhatsApp Queues</h2>
+        <button onclick="loadDispatchQueue()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-indigo-400 font-bold touch-btn transition-colors"><i class="fa-solid fa-arrows-rotate mr-1.5"></i> Sync</button>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mb-2">
+        <select id="queue-filter-class" onchange="filterQueue(activeQueueFilter)" class="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs font-bold">
+          <option value="ALL">All Classes</option>
+          <option value="1">Class 1</option><option value="2">Class 2</option><option value="3">Class 3</option>
+          <option value="4">Class 4</option><option value="5">Class 5</option><option value="6">Class 6</option>
+          <option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option>
+          <option value="10">Class 10</option><option value="Inter 1">Inter 1st Year</option><option value="Inter 2">Inter 2nd Year</option>
+          <option value="B.Tech">B.Tech</option>
+        </select>
+        <select id="queue-filter-gender" onchange="filterQueue(activeQueueFilter)" class="px-3 py-2 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs font-bold">
+          <option value="ALL">All Genders</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+      <div class="grid grid-cols-4 p-1.5 bg-slate-900 rounded-xl border border-slate-800 text-[11px] font-bold text-slate-400">
+        <button id="qcat-all" onclick="filterQueue('ALL')" class="py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-colors">All</button>
+        <button id="qcat-absent" onclick="filterQueue('ABSENT_ALERT')" class="py-2.5 rounded-lg hover:text-white transition-colors">Absentees</button>
+        <button id="qcat-fees" onclick="filterQueue('FEE_REMINDER')" class="py-2.5 rounded-lg hover:text-white transition-colors">Fees Due</button>
+        <button id="qcat-disc" onclick="filterQueue('DISCIPLINE')" class="py-2.5 rounded-lg hover:text-white transition-colors">Discipline</button>
+      </div>
+      <div id="queue-cards-list" class="space-y-3"></div>
+    </div>
+
+    <!-- VIEW 3: INTAKE -->
+    <div id="view-intake" class="hidden space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h2 class="text-base font-extrabold text-white uppercase tracking-wider">Admissions & Staff</h2>
+        <div class="inline-flex p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold">
+          <button id="btn-mode-student" onclick="toggleIntakeMode('student')" class="px-4 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-colors">Student Entry</button>
+          <button id="btn-mode-staff" onclick="toggleIntakeMode('staff')" class="px-4 py-1.5 rounded-lg text-slate-400 hover:text-white transition-colors">Staff Entry</button>
+        </div>
+      </div>
+
+      <div id="intake-student-panel" class="space-y-6">
+        <form onsubmit="handleStudentEnroll(event)" class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-5 shadow-sm">
+          <h3 class="font-extrabold text-white text-sm uppercase tracking-wider mb-2">New Student Enrollment</h3>
+          <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">FIRST NAME *</label><input type="text" id="adm-fname" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">LAST NAME *</label><input type="text" id="adm-lname" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">GRADE / LEVEL *</label>
+              <select id="adm-class" onchange="handleBtechSubj()" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-bold focus:border-indigo-500 transition-colors">
+                <option value="1">Class 1</option><option value="2">Class 2</option><option value="3">Class 3</option>
+                <option value="4">Class 4</option><option value="5">Class 5</option><option value="6">Class 6</option>
+                <option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option>
+                <option value="10" selected>Class 10</option>
+                <option value="Inter 1">Inter 1st Year</option><option value="Inter 2">Inter 2nd Year</option>
+                <option value="B.Tech">B.Tech</option>
+              </select>
             </div>
-            <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-xs">
-                <span class="text-slate-400 block text-[10px] uppercase font-bold">Active Tutors</span>
-                <span id="dash-total-tutors" class="text-xl font-mono font-bold text-emerald-400 mt-0.5 block">0</span>
-            </div>
-            <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-xs">
-                <span class="text-slate-400 block text-[10px] uppercase font-bold">Total Faculty</span>
-                <span id="dash-total-faculty" class="text-xl font-mono font-bold text-amber-400 mt-0.5 block">0</span>
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">GENDER *</label>
+              <select id="adm-gender" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-bold focus:border-indigo-500 transition-colors">
+                <option value="Male">Male</option><option value="Female">Female</option>
+              </select>
             </div>
         </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
-            <input type="date" id="filter-date" onchange="renderStudentsList()" class="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs font-mono focus:border-indigo-500">
-            <select id="filter-month" onchange="renderStudentsList()" class="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:border-indigo-500">
-                <option value="ALL">All Months</option>
-                <option value="01">January</option><option value="02">February</option><option value="03">March</option>
-                <option value="04">April</option><option value="05">May</option><option value="06">June</option>
-                <option value="07">July</option><option value="08">August</option><option value="09">September</option>
-                <option value="10">October</option><option value="11">November</option><option value="12">December</option>
-            </select>
-            <select id="filter-year" onchange="renderStudentsList()" class="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:border-indigo-500">
-                <option value="2026">2026</option>
-                <option value="2025">2025</option>
-            </select>
-            <select id="filter-class" onchange="renderStudentsList()" class="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:border-indigo-500">
+        <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">EXPECTED ARRIVAL TIME *</label><input type="time" id="adm-time" value="18:00" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-mono focus:border-indigo-500 transition-colors"></div>
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">ADMISSION DATE (ANCHOR) *</label><input type="date" id="adm-date" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-mono focus:border-indigo-500 transition-colors"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">SCHOOL NAME</label><input type="text" id="adm-school" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">AREA / COLONY</label><input type="text" id="adm-area" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">FATHER'S NAME</label><input type="text" id="adm-father-name" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">FATHER'S PHONE *</label><input type="tel" id="adm-father-phone" required pattern="[0-9]{10}" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-mono focus:border-indigo-500 transition-colors"></div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">MOTHER'S NAME</label><input type="text" id="adm-mother-name" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+            <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">MOTHER'S PHONE</label><input type="tel" id="adm-mother-phone" pattern="[0-9]{10}" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-mono focus:border-indigo-500 transition-colors"></div>
+        </div>
+        <div class="p-4 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-300">Target Official WhatsApp:</span>
+            <div class="flex items-center space-x-5">
+                <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="adm-primary-target" value="father" checked class="accent-indigo-600 w-4 h-4"><span class="text-white text-sm font-bold">Father</span></label>
+                <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="adm-primary-target" value="mother" class="accent-indigo-600 w-4 h-4"><span class="text-white text-sm font-bold">Mother</span></label>
+            </div>
+        </div>
+        <div>
+            <label class="block text-[11px] font-bold text-slate-400 mb-2.5">SUBJECTS (TAP TO SELECT)</label>
+            <div id="btech-subj-input" class="hidden mb-3 flex space-x-2">
+                <input type="text" id="custom-subj-val" placeholder="Add custom subject..." class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors">
+                <button type="button" onclick="addCustomSubj()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold rounded-xl touch-btn transition-colors">Add</button>
+            </div>
+            <div id="adm-subjects-container" class="flex flex-wrap gap-2.5">
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 transition-colors">Telugu</button>
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 transition-colors">Hindi</button>
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 transition-colors">English</button>
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold border border-indigo-600 transition-colors">Mathematics</button>
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-bold border border-indigo-600 transition-colors">Science</button>
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 transition-colors">Physics</button>
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 transition-colors">Chemistry</button>
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 transition-colors">Biology</button>
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 transition-colors">Social Studies</button>
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 transition-colors">Civics</button>
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 transition-colors">History</button>
+                <button type="button" onclick="toggleSubject(this)" class="px-3 py-1.5 rounded-lg bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700 transition-colors">Geography</button>
+            </div>
+        </div>
+        <div>
+            <label class="block text-[11px] font-bold text-slate-400 mb-1.5">MONTHLY FEE (₹) *</label>
+            <input type="number" id="adm-fee" value="1500" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-mono font-bold focus:border-indigo-500 transition-colors">
+        </div>
+        <button type="submit" class="w-full py-3.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm uppercase tracking-wider shadow-lg touch-btn transition-colors">Complete Student Enrollment</button>
+      </form>
+      
+      <!-- Recently Admitted Students Roster -->
+      <div class="pt-2">
+        <div class="flex items-center justify-between mb-4">
+            <h4 class="font-extrabold text-white text-sm uppercase tracking-wider">Recently Admitted Students</h4>
+            <select id="adm-roster-class" onchange="renderAdmissionsRoster()" class="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-white text-xs font-bold">
                 <option value="ALL">All Classes</option>
                 <option value="1">Class 1</option><option value="2">Class 2</option><option value="3">Class 3</option>
                 <option value="4">Class 4</option><option value="5">Class 5</option><option value="6">Class 6</option>
                 <option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option>
-                <option value="10">Class 10</option>
-                <option value="Inter 1">Inter 1st Year</option><option value="Inter 2">Inter 2nd Year</option>
+                <option value="10">Class 10</option><option value="Inter 1">Inter 1st Year</option><option value="Inter 2">Inter 2nd Year</option>
                 <option value="B.Tech">B.Tech</option>
             </select>
-            <select id="filter-gender" onchange="renderStudentsList()" class="w-full px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:border-indigo-500">
-                <option value="ALL">All Genders</option>
-                <option value="Male">Boys</option>
-                <option value="Female">Girls</option>
-            </select>
         </div>
-
-        <div class="grid grid-cols-3 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold text-slate-400">
-            <button id="dash-tab-students" onclick="switchPillar('students')" class="py-2 rounded-lg bg-indigo-600 text-white shadow-sm">Students</button>
-            <button id="dash-tab-tutors" onclick="switchPillar('tutors')" class="py-2 rounded-lg hover:text-white">Tutors</button>
-            <button id="dash-tab-faculty" onclick="switchPillar('faculty')" class="py-2 rounded-lg hover:text-white">Faculty</button>
-        </div>
-
-        <!-- Students Pillar -->
-        <div id="dash-panel-students" class="space-y-3">
-            <div class="flex flex-wrap gap-1.5 text-[10px] font-bold">
-                <button onclick="filterBucket('ALL')" id="bucket-ALL" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white">All</button>
-                <button onclick="filterBucket('PRESENT')" id="bucket-PRESENT" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">Present</button>
-                <button onclick="filterBucket('ABSENT')" id="bucket-ABSENT" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">Absent</button>
-                <button onclick="filterBucket('LATE')" id="bucket-LATE" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">Late</button>
-                <button onclick="filterBucket('EARLY')" id="bucket-EARLY" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">Early Leave</button>
-                <button onclick="filterBucket('UNMARKED')" id="bucket-UNMARKED" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">Unmarked ⚠️</button>
-                <button onclick="filterBucket('FEE_DUES')" id="bucket-FEE_DUES" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">Fee Dues</button>
-                <button onclick="filterBucket('LEFT')" id="bucket-LEFT" class="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">Left Tuition</button>
-            </div>
-            
-            <div id="absent-sub-filters" class="hidden flex gap-2">
-                <button onclick="filterAbsentSub('ABSENTEES')" id="absent-sub-ABSENTEES" class="text-[10px] font-bold px-2 py-1 bg-rose-600 rounded text-white shadow-xs">Absentees</button>
-                <button onclick="filterAbsentSub('UNINFORMED')" id="absent-sub-UNINFORMED" class="text-[10px] font-bold px-2 py-1 bg-slate-800 border border-slate-700 rounded text-slate-300 hover:text-white">Uninformed</button>
-            </div>
-            
-            <div id="fee-sub-filters" class="hidden flex gap-2">
-                <button class="text-[10px] font-bold px-2 py-1 bg-amber-600 rounded text-white shadow-xs">Pre-Fee (< 5 days)</button>
-                <button class="text-[10px] font-bold px-2 py-1 bg-rose-600 rounded text-white shadow-xs">Post-Fee (Overdue)</button>
-            </div>
-            
-            <div id="list-students" class="space-y-2"></div>
-        </div>
-
-        <!-- Tutors Pillar -->
-        <div id="dash-panel-tutors" class="hidden space-y-3">
-            <select id="filter-tutor-gender" onchange="renderTutorsList()" class="w-1/2 px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-[11px] font-bold focus:outline-none focus:border-indigo-500">
-                <option value="ALL">All Genders</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-            </select>
-            <div id="list-tutors" class="space-y-2"></div>
-        </div>
-
-        <!-- Faculty Pillar -->
-        <div id="dash-panel-faculty" class="hidden space-y-3">
-            <select id="filter-faculty-gender" onchange="renderFacultyList()" class="w-1/2 px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-[11px] font-bold focus:outline-none focus:border-indigo-500">
-                <option value="ALL">All Genders</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-            </select>
-            <div id="list-faculty" class="space-y-2"></div>
-        </div>
+        <div id="admissions-roster-list" class="space-y-3"></div>
+      </div>
     </div>
 
-    <!-- VIEW 2: QUEUES -->
-    <div id="view-dispatches" class="hidden space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h2 class="text-sm font-extrabold text-white uppercase tracking-wider">WhatsApp Queues</h2>
-            <button onclick="loadDispatchQueue()" class="text-xs text-indigo-400 font-bold"><i class="fa-solid fa-arrows-rotate mr-1"></i> Sync</button>
-        </div>
-        <div class="grid grid-cols-4 p-1 bg-slate-900 rounded-xl border border-slate-800 text-[10px] font-bold text-slate-400">
-            <button id="qcat-all" onclick="filterQueue('ALL')" class="py-2 rounded-lg bg-indigo-600 text-white">All</button>
-            <button id="qcat-absent" onclick="filterQueue('ABSENT_ALERT')" class="py-2 rounded-lg hover:text-white">Absentees</button>
-            <button id="qcat-fees" onclick="filterQueue('FEE_REMINDER')" class="py-2 rounded-lg hover:text-white">Fees Due</button>
-            <button id="qcat-disc" onclick="filterQueue('DISCIPLINE')" class="py-2 rounded-lg hover:text-white">Discipline</button>
-        </div>
-        <div id="queue-cards-list" class="space-y-3"></div>
+    <div id="intake-staff-panel" class="hidden space-y-6">
+      <div class="grid grid-cols-3 p-1.5 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold text-slate-400">
+          <button id="srole-tutor" onclick="selectStaffRole('tutor')" class="py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-colors">Floor Tutor</button>
+          <button id="srole-faculty" onclick="selectStaffRole('faculty')" class="py-2.5 rounded-lg hover:text-white transition-colors">Sr. Faculty</button>
+          <button id="srole-associate_director" onclick="selectStaffRole('associate_director')" class="py-2.5 rounded-lg hover:text-white transition-colors">Assoc. Director</button>
+      </div>
+      <form onsubmit="handleStaffEnroll(event)" class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-5 shadow-sm">
+          <h3 class="font-extrabold text-white text-sm uppercase tracking-wider mb-2">Register New Staff</h3>
+          <div class="grid grid-cols-2 gap-4">
+              <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">FULL NAME *</label><input type="text" id="staff-name" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+              <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">PHONE NUMBER *</label><input type="tel" id="staff-phone" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-mono focus:border-indigo-500 transition-colors"></div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+              <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">GENDER *</label>
+                <select id="staff-gender" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-bold focus:border-indigo-500 transition-colors">
+                    <option value="Male">Male</option><option value="Female">Female</option>
+                </select>
+              </div>
+              <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">JOINING DATE *</label><input type="date" id="staff-join-date" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-mono focus:border-indigo-500 transition-colors"></div>
+          </div>
+          <div id="box-specialty" class="hidden">
+              <label class="block text-[11px] font-bold text-slate-400 mb-1.5">SPECIALTY SUBJECT(S) *</label>
+              <input type="text" id="staff-specialty" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors">
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+              <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">PASSWORD *</label><input type="password" id="staff-pass1" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+              <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">CONFIRM PASSWORD *</label><input type="password" id="staff-pass2" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+          </div>
+          <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">MONTHLY SALARY (₹) *</label><input type="number" id="staff-salary" value="15000" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-mono font-bold focus:border-indigo-500 transition-colors"></div>
+          <p class="text-[10px] text-slate-500">Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character.</p>
+          <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-sm uppercase tracking-wider touch-btn shadow-lg transition-colors">Save Staff Record</button>
+      </form>
+
+      <div class="pt-4 border-t border-slate-800 space-y-4">
+          <div class="flex items-center justify-between">
+              <h4 class="font-extrabold text-white text-sm uppercase tracking-wider">Staff Roster</h4>
+              <div class="flex bg-slate-900 rounded-lg border border-slate-800 p-1 text-[10px] font-bold">
+                  <button id="sroster-active" onclick="switchStaffRoster('ACTIVE')" class="px-3 py-1.5 bg-indigo-600 text-white rounded shadow-sm transition-colors">Active</button>
+                  <button id="sroster-inactive" onclick="switchStaffRoster('INACTIVE')" class="px-3 py-1.5 text-slate-400 hover:text-white transition-colors">Inactive</button>
+              </div>
+          </div>
+          <div id="staff-list-container" class="space-y-3"></div>
+      </div>
     </div>
+  </div>
 
-    <!-- VIEW 3: INTAKE -->
-    <div id="view-intake" class="hidden space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h2 class="text-sm font-extrabold text-white uppercase tracking-wider">Admissions / Intake</h2>
-            <div class="inline-flex p-0.5 bg-slate-900 rounded-lg border border-slate-800 text-xs font-bold">
-                <button id="btn-mode-student" onclick="toggleIntakeMode('student')" class="px-3 py-1 rounded-md bg-indigo-600 text-white">Student</button>
-                <button id="btn-mode-staff" onclick="toggleIntakeMode('staff')" class="px-3 py-1 rounded-md text-slate-400 hover:text-white">Staff</button>
-            </div>
-        </div>
+  <!-- VIEW 4: LEDGER & PAYROLL -->
+  <div id="view-fees-salaries" class="hidden space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-base font-extrabold text-white uppercase tracking-wider">Ledger & Payroll</h2>
+          <button onclick="loadFinancialLedger()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs text-indigo-400 font-bold touch-btn transition-colors"><i class="fa-solid fa-arrows-rotate mr-1.5"></i> Sync</button>
+      </div>
 
-        <div id="intake-student-panel" class="space-y-4">
-            <div class="p-3 bg-slate-900 rounded-xl border border-slate-800 flex justify-between">
-                <span class="text-xs font-bold text-slate-400">ADMISSION TYPE:</span>
-                <div class="flex space-x-3">
-                    <label class="flex items-center space-x-1"><input type="radio" name="adm-type" value="fresh" checked onchange="toggleAdmissionDateMode(false)" class="accent-indigo-600"><span class="text-xs font-bold text-white">Fresh</span></label>
-                    <label class="flex items-center space-x-1"><input type="radio" name="adm-type" value="legacy" onchange="toggleAdmissionDateMode(true)" class="accent-amber-500"><span class="text-xs font-bold text-amber-400">Old Student</span></label>
-                </div>
-            </div>
-            <form onsubmit="handleStudentEnroll(event)" class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">STUDENT FULL NAME *</label><input type="text" id="adm-name" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">GRADE / LEVEL *</label>
-                        <select id="adm-class" onchange="handleBtechSubj()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500">
-                            <option value="1">Class 1</option><option value="2">Class 2</option><option value="3">Class 3</option>
-                            <option value="4">Class 4</option><option value="5">Class 5</option><option value="6">Class 6</option>
-                            <option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option>
-                            <option value="10" selected>Class 10</option>
-                            <option value="Inter 1">Inter 1st Year</option><option value="Inter 2">Inter 2nd Year</option>
-                            <option value="B.Tech">B.Tech</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">GENDER *</label>
-                        <select id="adm-gender" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500">
-                            <option value="Male">Male</option><option value="Female">Female</option>
-                        </select>
-                    </div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">ADMISSION DATE (ANCHOR) *</label><input type="date" id="adm-date" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-mono focus:border-indigo-500"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">SCHOOL NAME</label><input type="text" id="adm-school" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">AREA / COLONY</label><input type="text" id="adm-area" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">FATHER'S NAME</label><input type="text" id="adm-father-name" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">FATHER'S PHONE *</label><input type="tel" id="adm-father-phone" required pattern="[0-9]{10}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-mono focus:border-indigo-500"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">MOTHER'S NAME</label><input type="text" id="adm-mother-name" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">MOTHER'S PHONE</label><input type="tel" id="adm-mother-phone" pattern="[0-9]{10}" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-mono focus:border-indigo-500"></div>
-                </div>
-                <div class="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
-                    <span class="text-[11px] font-bold text-slate-300">Target Official WhatsApp:</span>
-                    <div class="flex items-center space-x-4">
-                        <label class="flex items-center space-x-1.5 cursor-pointer"><input type="radio" name="adm-primary-target" value="father" checked class="accent-indigo-600"><span class="text-white text-xs">Father</span></label>
-                        <label class="flex items-center space-x-1.5 cursor-pointer"><input type="radio" name="adm-primary-target" value="mother" class="accent-indigo-600"><span class="text-white text-xs">Mother</span></label>
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-bold text-slate-400 mb-2">SUBJECTS (TAP TO SELECT)</label>
-                    <div id="btech-subj-input" class="hidden mb-2 flex space-x-2">
-                        <input type="text" id="custom-subj-val" placeholder="Add custom subject..." class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500">
-                        <button type="button" onclick="addCustomSubj()" class="px-3 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg touch-btn">Add</button>
-                    </div>
-                    <div id="adm-subjects-container" class="flex flex-wrap gap-2">
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">Telugu</button>
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">Hindi</button>
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">English</button>
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">Mathematics</button>
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">Science</button>
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">Physics</button>
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">Chemistry</button>
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">Biology</button>
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">Social Studies</button>
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">Civics</button>
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">History</button>
-                        <button type="button" onclick="toggleSubject(this)" class="px-2 py-1 rounded bg-slate-800 text-slate-400 text-xs font-bold border border-slate-700">Geography</button>
-                    </div>
-                </div>
-                <div><label class="block text-[10px] font-bold text-slate-400 mb-1">MONTHLY FEE (₹)</label><input type="number" id="adm-fee" value="1500" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-mono focus:border-indigo-500"></div>
-                <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider touch-btn shadow-lg">Enroll Student</button>
-            </form>
-        </div>
+      <!-- Live Profit & Loss Bar -->
+      <div class="grid grid-cols-4 gap-3 text-center">
+          <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-sm"><span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Fees In</span><span id="pl-fees" class="text-lg font-mono font-black text-emerald-400 mt-1 block">₹0</span></div>
+          <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-sm"><span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Payroll</span><span id="pl-staff" class="text-lg font-mono font-black text-rose-400 mt-1 block">₹0</span></div>
+          <div class="bg-slate-900 p-3 rounded-2xl border border-slate-800 shadow-sm"><span class="block text-[10px] text-slate-400 uppercase font-bold tracking-wider">Expense</span><span id="pl-exp" class="text-lg font-mono font-black text-rose-400 mt-1 block">₹0</span></div>
+          <div class="bg-indigo-600/10 p-3 rounded-2xl border border-indigo-500/30 shadow-sm"><span class="block text-[10px] text-indigo-300 uppercase font-bold tracking-wider">Net Profit</span><span id="pl-net" class="text-lg font-mono font-black text-indigo-400 mt-1 block">₹0</span></div>
+      </div>
 
-        <div id="intake-staff-panel" class="hidden space-y-4">
-            <div class="grid grid-cols-3 p-1 bg-slate-900 rounded-lg border border-slate-800 text-xs font-bold text-slate-400">
-                <button id="srole-tutor" onclick="selectStaffRole('tutor')" class="py-1.5 rounded bg-indigo-600 text-white">Tutor</button>
-                <button id="srole-faculty" onclick="selectStaffRole('faculty')" class="py-1.5 rounded hover:text-white">Sr. Faculty</button>
-                <button id="srole-associate_director" onclick="selectStaffRole('associate_director')" class="py-1.5 rounded hover:text-white">Assoc. Director</button>
-            </div>
-            <form onsubmit="handleStaffEnroll(event)" class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4">
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">FULL NAME *</label><input type="text" id="staff-name" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">PHONE NUMBER *</label><input type="tel" id="staff-phone" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-mono focus:border-indigo-500"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">GENDER *</label><select id="staff-gender" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"><option value="Male">Male</option><option value="Female">Female</option></select></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">JOINING DATE *</label><input type="date" id="staff-join-date" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-mono focus:border-indigo-500"></div>
-                </div>
-                <div id="box-specialty" class="hidden"><label class="block text-[10px] font-bold text-slate-400 mb-1">SPECIALTY SUBJECT(S) *</label><input type="text" id="staff-specialty" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">PASSWORD *</label><input type="password" id="staff-pass1" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">CONFIRM PASSWORD *</label><input type="password" id="staff-pass2" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
-                </div>
-                <div><label class="block text-[10px] font-bold text-slate-400 mb-1">MONTHLY SALARY (₹) *</label><input type="number" id="staff-salary" value="15000" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-mono focus:border-indigo-500"></div>
-                <p class="text-[9px] text-slate-500">Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special character.</p>
-                <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs uppercase tracking-wider touch-btn shadow-lg">Save Staff Record</button>
-            </form>
-            <div class="space-y-2">
-                <h4 class="font-extrabold text-white text-xs uppercase tracking-wider border-b border-slate-800 pb-1">Staff Roster</h4>
-                <div id="staff-list-container" class="space-y-2"></div>
-            </div>
-        </div>
-    </div>
+      <div class="grid grid-cols-3 p-1.5 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold text-slate-400">
+          <button id="ledg-tab-students" onclick="switchLedgerTab('students')" class="py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-colors">Student Fees</button>
+          <button id="ledg-tab-staff" onclick="switchLedgerTab('staff')" class="py-2.5 rounded-lg hover:text-white transition-colors">Staff Payroll</button>
+          <button id="ledg-tab-expenses" onclick="switchLedgerTab('expenses')" class="py-2.5 rounded-lg hover:text-white transition-colors">Expenses</button>
+      </div>
+      
+      <!-- Student Fees Ledger -->
+      <div id="ledger-students" class="space-y-4">
+          <div class="grid grid-cols-3 gap-3 text-center">
+              <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm"><span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">All Records</span><span id="ledg-stu-all" class="text-xl font-mono font-black text-white mt-1 block">0</span></div>
+              <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm"><span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Paid</span><span id="ledg-stu-paid" class="text-xl font-mono font-black text-emerald-400 mt-1 block">₹0</span></div>
+              <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm"><span class="block text-[10px] text-slate-400 font-bold uppercase tracking-wider">Total Unpaid</span><span id="ledg-stu-unpaid" class="text-xl font-mono font-black text-rose-400 mt-1 block">₹0</span></div>
+          </div>
+          <div class="flex space-x-2 text-[11px] font-bold overflow-x-auto pb-2 hide-scrollbar">
+              <button onclick="filterStudentLedger('ALL')" id="fl-stu-ALL" class="px-4 py-2 rounded-xl bg-indigo-600 text-white shrink-0 transition-colors">All Active</button>
+              <button onclick="filterStudentLedger('PAID')" id="fl-stu-PAID" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 border border-slate-800 shrink-0 hover:text-white transition-colors">Paid</button>
+              <button onclick="filterStudentLedger('UNPAID')" id="fl-stu-UNPAID" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 border border-slate-800 shrink-0 hover:text-white transition-colors">Unpaid</button>
+              <button onclick="filterStudentLedger('PARTIAL')" id="fl-stu-PARTIAL" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 border border-slate-800 shrink-0 hover:text-white transition-colors">Partial Pay</button>
+              <button onclick="filterStudentLedger('PRE_DUE')" id="fl-stu-PRE_DUE" class="px-4 py-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/30 shrink-0 hover:bg-amber-500/20 transition-colors">Due in 2-3 Days</button>
+              <button onclick="filterStudentLedger('POST_DUE')" id="fl-stu-POST_DUE" class="px-4 py-2 rounded-xl bg-rose-500/10 text-rose-400 border border-rose-500/30 shrink-0 hover:bg-rose-500/20 transition-colors">Overdue</button>
+              <button onclick="filterStudentLedger('LEFT_TUITION')" id="fl-stu-LEFT_TUITION" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-500 border border-slate-800 shrink-0 hover:text-white transition-colors"><i class="fa-solid fa-box-archive mr-1"></i> Left Students</button>
+          </div>
+          <div id="director-fees-list-container" class="space-y-3"></div>
+      </div>
+      
+      <!-- Staff Payroll Ledger -->
+      <div id="ledger-staff" class="hidden space-y-4">
+          <div class="flex space-x-2 text-[11px] font-bold mb-3">
+              <button onclick="filterStaffLedger('ALL')" id="fl-stf-ALL" class="px-4 py-2 rounded-xl bg-indigo-600 text-white transition-colors">All</button>
+              <button onclick="filterStaffLedger('PAID')" id="fl-stf-PAID" class="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 border border-slate-800 hover:text-white transition-colors">Paid</button>
+          </div>
+          <div id="ledger-staff-list" class="space-y-3"></div>
+      </div>
 
-    <!-- VIEW 4: LEDGER -->
-    <div id="view-fees-salaries" class="hidden space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h2 class="text-sm font-extrabold text-white uppercase tracking-wider">Ledger & Payroll</h2>
-            <button onclick="loadFinancialLedger()" class="text-xs text-indigo-400 font-bold"><i class="fa-solid fa-arrows-rotate mr-1"></i> Sync</button>
-        </div>
-        <div class="grid grid-cols-3 p-1 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold text-slate-400">
-            <button id="ledg-tab-students" onclick="switchLedgerTab('students')" class="py-2 rounded-lg bg-indigo-600 text-white shadow-sm">Students</button>
-            <button id="ledg-tab-staff" onclick="switchLedgerTab('staff')" class="py-2 rounded-lg hover:text-white">Staff Payroll</button>
-            <button id="ledg-tab-expenses" onclick="switchLedgerTab('expenses')" class="py-2 rounded-lg hover:text-white">Expenses</button>
-        </div>
-        
-        <div id="ledger-students" class="space-y-4">
-            <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800"><span class="block text-[10px] text-slate-400">All</span><span id="ledg-stu-all" class="text-sm font-mono font-bold text-white">0</span></div>
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800"><span class="block text-[10px] text-slate-400">Paid</span><span id="ledg-stu-paid" class="text-sm font-mono font-bold text-emerald-400">₹0</span></div>
-                <div class="bg-slate-900 p-3 rounded-xl border border-slate-800"><span class="block text-[10px] text-slate-400">Unpaid</span><span id="ledg-stu-unpaid" class="text-sm font-mono font-bold text-rose-400">₹0</span></div>
-            </div>
-            <div class="flex space-x-2 text-[10px] font-bold overflow-x-auto pb-2 hide-scrollbar">
-                <button onclick="filterStudentLedger('ALL')" id="fl-stu-ALL" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white shrink-0">All</button>
-                <button onclick="filterStudentLedger('PAID')" id="fl-stu-PAID" class="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 border border-slate-800 shrink-0">Paid</button>
-                <button onclick="filterStudentLedger('PRE_DUE')" id="fl-stu-PRE_DUE" class="px-3 py-1.5 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 shrink-0">Due in 2-3 Days</button>
-                <button onclick="filterStudentLedger('POST_DUE')" id="fl-stu-POST_DUE" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-400 border border-rose-500/30 shrink-0">Overdue</button>
-                <button onclick="filterStudentLedger('PARTIAL')" id="fl-stu-PARTIAL" class="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 border border-slate-800 shrink-0">Partial</button>
-            </div>
-            <div id="director-fees-list-container" class="space-y-2"></div>
-        </div>
-        
-        <div id="ledger-staff" class="hidden space-y-4">
-            <div class="flex space-x-2 text-[10px] font-bold mb-2">
-                <button onclick="filterStaffLedger('ALL')" id="fl-stf-ALL" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white">All</button>
-                <button onclick="filterStaffLedger('PAID')" id="fl-stf-PAID" class="px-3 py-1.5 rounded-lg bg-slate-900 text-slate-400 border border-slate-800">Paid</button>
-            </div>
-            <div id="ledger-staff-list" class="space-y-2"></div>
-        </div>
+      <!-- Expenses Ledger -->
+      <div id="ledger-expenses" class="hidden space-y-4">
+          <form onsubmit="handleLogExpense(event)" class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-4 shadow-sm">
+              <h3 class="font-extrabold text-white text-sm uppercase tracking-wider mb-2">Log New Expense</h3>
+              <div class="grid grid-cols-2 gap-4">
+                  <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">EXPENSE NAME / DESC *</label><input type="text" id="exp-desc" required placeholder="e.g. Electricity Bill" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+                  <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">AMOUNT (₹) *</label><input type="number" id="exp-amount" required placeholder="2500" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-mono font-bold focus:border-indigo-500 transition-colors"></div>
+              </div>
+              <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">REMARKS / REASON</label><input type="text" id="exp-remarks" placeholder="Paid via UPI..." class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+              <button type="submit" class="w-full py-3 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-sm uppercase tracking-wider touch-btn shadow-md transition-colors">Add to Ledger</button>
+          </form>
+          <div class="pt-2">
+            <h4 class="font-extrabold text-white text-sm uppercase tracking-wider mb-3">Expense History</h4>
+            <div id="ledger-expense-list" class="space-y-3"></div>
+          </div>
+      </div>
+  </div>
 
-        <div id="ledger-expenses" class="hidden space-y-4">
-            <form onsubmit="handleLogExpense(event)" class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">EXPENSE DESC</label><input type="text" id="exp-desc" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">AMOUNT (₹)</label><input type="number" id="exp-amount" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-mono"></div>
-                </div>
-                <button type="submit" class="w-full py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-xs touch-btn shadow-md">Log Expense</button>
-            </form>
-            <div id="ledger-expense-list" class="space-y-2"></div>
-        </div>
-    </div>
+  <!-- VIEW 5: HOLIDAYS (NEW) -->
+  <div id="view-holidays" class="hidden space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-base font-extrabold text-white uppercase tracking-wider">Holiday Management</h2>
+      </div>
+      <form onsubmit="handlePublishHoliday(event)" class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-4 shadow-sm">
+          <h3 class="font-extrabold text-white text-sm uppercase tracking-wider mb-2">Publish Institutional Holiday</h3>
+          <div class="grid grid-cols-2 gap-4">
+              <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">DATE *</label><input type="date" id="hol-date" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-mono font-bold focus:border-indigo-500 transition-colors"></div>
+              <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">OCCASION / REASON *</label><input type="text" id="hol-occ" required placeholder="e.g. Diwali, Heavy Rain" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+          </div>
+          <div>
+              <label class="block text-[11px] font-bold text-slate-400 mb-1.5">EXEMPT CLASSES (PARTIAL HOLIDAY)</label>
+              <input type="text" id="hol-exempt" placeholder="e.g. 10, Inter 2 (Leave blank to apply to entire institution)" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors">
+              <p class="text-[10px] text-slate-500 mt-1.5">Exempted classes will still be expected on the floor and will not receive the 'H' safe tag.</p>
+          </div>
+          <button type="submit" class="w-full py-3 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-xl text-sm uppercase tracking-wider touch-btn shadow-md transition-colors">Publish to All Calendars</button>
+      </form>
+      <div class="pt-2">
+        <h4 class="font-extrabold text-white text-sm uppercase tracking-wider mb-3">Published Holidays</h4>
+        <div id="holidays-list" class="space-y-3"></div>
+      </div>
+  </div>
 
-    <!-- VIEW 5: SECURITY -->
-    <div id="view-security-portal" class="hidden space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
-            <h2 class="text-sm font-extrabold text-white uppercase tracking-wider">Security & Access</h2>
-        </div>
-        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4 shadow-xs">
-            <h3 class="font-extrabold text-white text-xs flex items-center space-x-2"><i class="fa-solid fa-user-tie text-indigo-400"></i><span>Director Master Controls</span></h3>
-            <form onsubmit="handleUpdateDirectorPIN(event)" class="space-y-3">
-                <div class="grid grid-cols-2 gap-3">
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">CURRENT PIN</label><input type="password" id="sec-current-pin" maxlength="6" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-center tracking-widest font-mono focus:border-indigo-500"></div>
-                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">NEW PIN</label><input type="password" id="sec-new-pin" maxlength="6" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-center tracking-widest font-mono focus:border-indigo-500"></div>
-                </div>
-                <button type="submit" class="w-full py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs touch-btn shadow-md">Update Master PIN</button>
-            </form>
-        </div>
-        <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4 shadow-xs">
-            <h3 class="font-extrabold text-white text-xs flex items-center space-x-2"><i class="fa-solid fa-users-gear text-amber-400"></i><span>Staff Password Reset Utility</span></h3>
-            <select id="sec-staff-select" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500">
-                <option value="">-- Select Staff Member --</option>
-            </select>
-            <div class="grid grid-cols-2 gap-3">
-                <div><label class="block text-[10px] font-bold text-slate-400 mb-1">NEW PASSWORD</label><input type="password" id="sec-new-pass" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
-                <div><label class="block text-[10px] font-bold text-slate-400 mb-1">CONFIRM PASSWORD</label><input type="password" id="sec-confirm-pass" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
-            </div>
-            <button onclick="handleStaffPasswordReset()" class="w-full py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg text-xs touch-btn shadow-md">Force Password Reset</button>
-        </div>
-    </div>
+  <!-- VIEW 6: SECURITY -->
+  <div id="view-security-portal" class="hidden space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h2 class="text-base font-extrabold text-white uppercase tracking-wider">Security & Access</h2>
+      </div>
+      <div class="grid grid-cols-2 p-1.5 bg-slate-900 rounded-xl border border-slate-800 text-xs font-bold text-slate-400">
+          <button id="sec-tab-dir" onclick="switchSecurityTab('dir')" class="py-2.5 rounded-lg bg-indigo-600 text-white shadow-sm transition-colors">Main Director</button>
+          <button id="sec-tab-assoc" onclick="switchSecurityTab('assoc')" class="py-2.5 rounded-lg hover:text-white transition-colors">Associate Director</button>
+      </div>
+      <form onsubmit="handleUpdateDirectorSecurity(event)" class="bg-slate-900 p-5 rounded-3xl border border-slate-800 space-y-4 shadow-sm">
+          <h3 id="sec-title-display" class="font-extrabold text-white text-sm uppercase tracking-wider mb-2">Update Main Director Credentials</h3>
+          <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">NEW LOGIN PASSWORD</label><input type="password" id="sec-new-pass" required placeholder="••••••••" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm focus:border-indigo-500 transition-colors"></div>
+          <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">NEW 6-DIGIT SECURITY PIN</label><input type="password" id="sec-new-pin" maxlength="6" required placeholder="••••••" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-center tracking-[0.5em] font-mono text-lg font-bold focus:border-indigo-500 transition-colors"></div>
+          <button type="submit" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-sm uppercase tracking-wider touch-btn shadow-md transition-colors">Update Security Profile</button>
+      </form>
+  </div>
 </main>
 
 <!-- MODALS -->
-
 <!-- Staff Calendar Modal -->
-<div id="modal-staff-calendar" class="hidden fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3">
-    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3 text-xs shadow-2xl">
-        <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-            <h4 id="staff-calendar-title" class="font-extrabold text-white text-sm">Staff Calendar</h4>
-            <button onclick="closeStaffCalendar()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-        </div>
-        <div id="staff-calendar-grid" class="grid grid-cols-7 gap-1.5 pt-2"></div>
-        <div id="staff-day-details" class="p-3 bg-slate-950 rounded-xl border border-slate-800 hidden mt-2">
-            <p id="staff-day-status" class="font-bold mb-1"></p>
-            <p id="staff-day-students" class="text-[11px] text-slate-400 leading-relaxed"></p>
-        </div>
-    </div>
+<div id="modal-staff-calendar" class="hidden fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+  <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <h4 id="staff-calendar-title" class="font-extrabold text-white text-base">Staff Calendar</h4>
+          <button onclick="closeStaffCalendar()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div id="staff-calendar-grid" class="grid grid-cols-7 gap-2 pt-2"></div>
+      <div id="staff-day-details" class="p-4 bg-slate-950 rounded-2xl border border-slate-800 hidden mt-3">
+          <p id="staff-day-status" class="font-bold mb-1 text-sm"></p>
+          <p id="staff-day-students" class="text-xs text-slate-400 leading-relaxed"></p>
+      </div>
+  </div>
 </div>
 
 <!-- Student Dossier Modal -->
 <div id="student-modal" class="hidden fixed inset-0 z-[60] bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4">
-    <div class="bg-slate-900 rounded-3xl max-w-2xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-800">
-        <div class="p-3.5 sm:p-4 border-b border-slate-800 bg-slate-900/90 flex items-start justify-between gap-2 shrink-0 rounded-t-3xl">
-            <div>
-                <div class="flex flex-wrap items-center gap-2">
-                    <h3 id="modal-student-name" class="font-extrabold text-base sm:text-lg text-white">Student Name</h3>
-                    <span id="modal-student-badge" class="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-500/20 text-indigo-300">Class</span>
-                </div>
-            </div>
-            <div class="flex items-center space-x-1.5 shrink-0">
-                <button onclick="openCustomRangePdfModal()" class="px-2.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[10px] shadow-lg shadow-indigo-600/20 touch-btn"><i class="fa-solid fa-file-pdf mr-1.5"></i>PDF</button>
-                <button id="btn-delete-student" onclick="deleteActiveStudent()" class="px-2.5 py-1.5 rounded-xl bg-rose-600/20 text-rose-400 font-bold text-[10px] touch-btn"><i class="fa-solid fa-trash-can"></i></button>
-                <button id="btn-recall-student" onclick="recallActiveStudent()" class="hidden px-2.5 py-1.5 rounded-xl bg-emerald-600/20 text-emerald-400 font-bold text-[10px] touch-btn"><i class="fa-solid fa-rotate-left mr-1"></i>Recall</button>
-                <button onclick="closeStudentModal()" class="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800 touch-btn"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-        </div>
-        <div class="flex items-center space-x-1 border-b border-slate-800 px-3.5 pt-2 text-[11px] font-bold bg-slate-900/50 overflow-x-auto hide-scrollbar shrink-0">
-            <button onclick="switchDossierTab('attendance')" id="dossier-tab-attendance" class="py-2 px-3 text-indigo-400 border-b-2 border-indigo-500 whitespace-nowrap">Attendance & Conduct</button>
-            <button onclick="switchDossierTab('syllabus')" id="dossier-tab-syllabus" class="py-2 px-3 text-slate-400 hover:text-white whitespace-nowrap">Syllabus</button>
-            <button onclick="switchDossierTab('doubts')" id="dossier-tab-doubts" class="py-2 px-3 text-slate-400 hover:text-white whitespace-nowrap">Faculty</button>
-            <button onclick="switchDossierTab('vault')" id="dossier-tab-vault" class="py-2 px-3 text-slate-400 hover:text-white whitespace-nowrap">Vault</button>
-            <button onclick="switchDossierTab('exams')" id="dossier-tab-exams" class="py-2 px-3 text-slate-400 hover:text-white whitespace-nowrap">Exams</button>
-        </div>
-        <div class="p-3.5 sm:p-4 overflow-y-auto space-y-3.5 flex-1 bg-slate-950 rounded-b-3xl">
-            <!-- Attendance -->
-            <div id="dossier-panel-attendance" class="space-y-3">
-                <div id="progress-calendar-grid" class="grid grid-cols-7 gap-1.5"></div>
-                <div id="calendar-day-detail-box" class="p-3 bg-slate-900 rounded-xl border border-slate-800 hidden text-xs">
-                    <div class="flex items-center justify-between text-indigo-300 font-bold mb-1"><span id="detail-date-title">Date Inspection</span><span id="detail-status-pill" class="px-2 py-0.5 rounded text-[10px]">PRESENT</span></div>
-                    <p id="detail-date-notes" class="text-slate-300 text-[11px]"></p>
-                </div>
-            </div>
-            <!-- Syllabus -->
-            <div id="dossier-panel-syllabus" class="hidden space-y-3">
-                <div id="dossier-subjects-list" class="flex flex-wrap gap-1.5"></div>
-                <div class="border-t border-slate-800 pt-2.5" id="dossier-chapters-list"></div>
-                <div class="border-t border-slate-800 pt-2.5 space-y-2"><h4 id="active-chapter-title" class="font-bold text-white text-xs">Chapter Subtopics</h4><div id="dossier-topics-list" class="space-y-2"></div></div>
-            </div>
-            <!-- Doubts -->
-            <div id="dossier-panel-doubts" class="hidden space-y-3.5">
-                <div id="dossier-doubts-history-list" class="space-y-2"><p class="text-[10px] text-slate-500 italic text-center border p-2 rounded">No faculty sessions recorded.</p></div>
-            </div>
-            <!-- Vault -->
-            <div id="dossier-panel-vault" class="hidden space-y-3.5">
-                <div class="bg-slate-900 p-3.5 rounded-2xl border border-slate-800 space-y-3">
-                    <select id="vault-test-selector" onchange="renderVaultTest()" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-bold focus:border-indigo-500"></select>
-                    <div id="vault-test-display" class="space-y-3 pt-2 border-t border-slate-800"></div>
-                </div>
-            </div>
-            <!-- Exams -->
-            <div id="dossier-panel-exams" class="hidden space-y-3"><div id="modal-exam-results" class="space-y-2"></div></div>
-        </div>
-    </div>
+  <div class="bg-slate-900 rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-800 overflow-hidden">
+      <!-- Header -->
+      <div class="p-4 sm:p-5 border-b border-slate-800 bg-slate-900/90 flex items-start justify-between gap-3 shrink-0">
+          <div>
+              <div class="flex flex-wrap items-center gap-2.5 mb-1">
+                  <h3 id="modal-student-name" class="font-extrabold text-lg sm:text-xl text-white">Student Name</h3>
+                  <span id="modal-student-badge" class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-indigo-500/20 text-indigo-300 font-mono">Class</span>
+              </div>
+          </div>
+          <div class="flex items-center space-x-2 shrink-0">
+              <button onclick="openCustomRangePdfModal()" class="px-3 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-md touch-btn transition-colors"><i class="fa-solid fa-file-pdf mr-1.5"></i>PDF</button>
+              <button id="btn-delete-student" onclick="deleteActiveStudent()" class="px-3 py-2 rounded-xl bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 font-bold text-xs touch-btn transition-colors"><i class="fa-solid fa-trash-can mr-1.5"></i>Delete</button>
+              <button id="btn-recall-student" onclick="recallActiveStudent()" class="hidden px-3 py-2 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-400 font-bold text-xs touch-btn transition-colors"><i class="fa-solid fa-rotate-left mr-1.5"></i>Recall</button>
+              <button onclick="closeStudentModal()" class="text-slate-400 hover:text-white p-2.5 rounded-xl bg-slate-800 touch-btn transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+          </div>
+      </div>
+      <!-- Tabs -->
+      <div class="flex items-center space-x-1 border-b border-slate-800 px-4 pt-2.5 text-xs font-bold bg-slate-900/50 overflow-x-auto hide-scrollbar shrink-0">
+          <button onclick="switchDossierTab('attendance')" id="dossier-tab-attendance" class="py-2.5 px-4 text-indigo-400 border-b-2 border-indigo-500 whitespace-nowrap transition-colors">Attendance</button>
+          <button onclick="switchDossierTab('syllabus')" id="dossier-tab-syllabus" class="py-2.5 px-4 text-slate-400 hover:text-white whitespace-nowrap transition-colors">Syllabus</button>
+          <button onclick="switchDossierTab('doubts')" id="dossier-tab-doubts" class="py-2.5 px-4 text-slate-400 hover:text-white whitespace-nowrap transition-colors">Faculty</button>
+          <button onclick="switchDossierTab('vault')" id="dossier-tab-vault" class="py-2.5 px-4 text-slate-400 hover:text-white whitespace-nowrap transition-colors">Vault</button>
+          <button onclick="switchDossierTab('exams')" id="dossier-tab-exams" class="py-2.5 px-4 text-slate-400 hover:text-white whitespace-nowrap transition-colors">Exams</button>
+      </div>
+      <!-- Body -->
+      <div class="p-4 sm:p-5 overflow-y-auto space-y-4 flex-1 bg-slate-950">
+          <div id="dossier-panel-attendance" class="space-y-4">
+              <div id="progress-calendar-grid" class="grid grid-cols-7 gap-2"></div>
+              <div id="calendar-day-detail-box" class="p-4 bg-slate-900 rounded-2xl border border-slate-800 hidden text-sm">
+                  <div class="flex items-center justify-between text-indigo-300 font-bold mb-2"><span id="detail-date-title">Date</span><span id="detail-status-pill" class="px-2.5 py-1 rounded-md text-[11px]"></span></div>
+                  <p id="detail-date-notes" class="text-slate-300 text-xs leading-relaxed"></p>
+              </div>
+          </div>
+          <div id="dossier-panel-syllabus" class="hidden space-y-4">
+              <div id="dossier-subjects-list" class="flex flex-wrap gap-2"></div>
+              <div class="border-t border-slate-800 pt-3" id="dossier-chapters-list"></div>
+              <div class="border-t border-slate-800 pt-3 space-y-2.5"><h4 id="active-chapter-title" class="font-bold text-white text-sm">Chapter Subtopics</h4><div id="dossier-topics-list" class="space-y-2.5"></div></div>
+          </div>
+          <div id="dossier-panel-doubts" class="hidden space-y-4">
+              <div id="dossier-doubts-history-list" class="space-y-2.5"></div>
+          </div>
+          <div id="dossier-panel-vault" class="hidden space-y-4">
+              <div class="bg-slate-900 p-4 rounded-2xl border border-slate-800 space-y-4">
+                  <select id="vault-test-selector" onchange="renderVaultTest()" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white text-sm font-bold focus:border-indigo-500 transition-colors"></select>
+                  <div id="vault-test-display" class="space-y-4 pt-3 border-t border-slate-800"></div>
+              </div>
+          </div>
+          <div id="dossier-panel-exams" class="hidden space-y-4">
+              <div id="modal-exam-results" class="space-y-2.5"></div>
+          </div>
+      </div>
+  </div>
 </div>
 
 <!-- PDF Range Modal -->
-<div id="modal-range-pdf" class="hidden fixed inset-0 z-[70] bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-3">
-    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-4 space-y-3 text-xs shadow-2xl">
-        <div class="flex items-center justify-between pb-1 border-b border-slate-800">
-            <h4 class="font-extrabold text-white text-sm">Generate Dossier PDF</h4>
-            <button onclick="closeCustomRangePdfModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-        </div>
-        <div class="grid grid-cols-2 gap-2">
-            <div><label class="block text-[10px] font-bold text-slate-400 mb-1">START DATE</label><input type="date" id="pdf-start-date" class="w-full px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-xs"></div>
-            <div><label class="block text-[10px] font-bold text-slate-400 mb-1">END DATE</label><input type="date" id="pdf-end-date" class="w-full px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-xs"></div>
-        </div>
-        <button type="button" onclick="executeDossierPdfExport()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl mt-2 touch-btn shadow-md">Download PDF</button>
-    </div>
+<div id="modal-range-pdf" class="hidden fixed inset-0 z-[70] bg-slate-950/80 backdrop-blur-xs flex items-center justify-center p-4">
+  <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between pb-2 border-b border-slate-800">
+          <h4 class="font-extrabold text-white text-base">Generate Dossier PDF</h4>
+          <button onclick="closeCustomRangePdfModal()" class="text-slate-400 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+          <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">START DATE</label><input type="date" id="pdf-start-date" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-sm"></div>
+          <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">END DATE</label><input type="date" id="pdf-end-date" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono text-sm"></div>
+      </div>
+      <button type="button" onclick="executeDossierPdfExport()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl mt-2 touch-btn shadow-md text-sm">Download PDF</button>
+  </div>
 </div>
 
 <!-- PDF Hidden Container -->
 <div id="printable-pdf-dossier" class="hidden bg-white text-slate-900 p-8 text-xs font-sans max-w-3xl mx-auto space-y-6">
-    <h1 class="text-xl font-extrabold">Tuition Desk Dossier</h1>
-    <p><strong>Name:</strong> <span id="pdf-print-name"></span></p>
-    <div id="pdf-print-tests"></div><div id="pdf-print-log"></div>
+  <h1 class="text-xl font-extrabold">Tuition Desk Dossier</h1>
+  <p><strong>Name:</strong> <span id="pdf-print-name"></span></p>
+  <div id="pdf-print-tests"></div><div id="pdf-print-log"></div>
 </div>
 
 <!-- Partial Pay Modal -->
 <div id="modal-partial-pay" class="hidden fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-5 space-y-4">
-        <h3 class="text-lg font-extrabold text-white">Log Partial Payment</h3>
-        <div><label class="block text-[10px] font-bold text-slate-400 mb-1">AMOUNT RECEIVED (₹)</label><input type="number" id="partial-pay-amt" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono"></div>
-        <div class="flex justify-end space-x-2">
-            <button onclick="closePartialPay()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs touch-btn">Cancel</button>
-            <button onclick="confirmPartialPay()" class="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs touch-btn">Save</button>
-        </div>
-    </div>
+  <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm shadow-2xl p-6 space-y-5">
+      <h3 class="text-lg font-extrabold text-white">Log Partial Payment</h3>
+      <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">AMOUNT RECEIVED (₹) *</label><input type="number" id="partial-pay-amt" required class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono font-bold text-base focus:border-indigo-500 transition-colors"></div>
+      <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">NEXT DUE DATE (OPTIONAL)</label><input type="date" id="partial-next-date" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono focus:border-indigo-500 transition-colors"></div>
+      <div class="flex justify-end space-x-3 pt-2">
+          <button onclick="closePartialPay()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs touch-btn transition-colors">Cancel</button>
+          <button onclick="confirmPartialPay()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs touch-btn shadow-md transition-colors">Save Payment</button>
+      </div>
+  </div>
 </div>
 
 <!-- Staff Pay Modal -->
 <div id="modal-staff-pay" class="hidden fixed inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-sm shadow-2xl p-5 space-y-4">
-        <h3 class="text-lg font-extrabold text-white">Adjust Payroll Payout</h3>
-        <div><label class="block text-[10px] font-bold text-slate-400 mb-1">MANUAL ADJUSTMENT (+ / - ₹)</label><input type="number" id="staff-pay-adj" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white font-mono" placeholder="e.g. 500 or -200"></div>
-        <div class="flex justify-end space-x-2">
-            <button onclick="closeStaffPay()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-xs touch-btn">Cancel</button>
-            <button onclick="confirmStaffPay()" class="px-4 py-2 bg-emerald-600 text-white font-bold rounded-xl text-xs touch-btn">Update Ledger</button>
-        </div>
-    </div>
+  <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-sm shadow-2xl p-6 space-y-5">
+      <h3 class="text-lg font-extrabold text-white">Adjust Payroll Payout</h3>
+      <div><label class="block text-[11px] font-bold text-slate-400 mb-1.5">MANUAL ADJUSTMENT (+ / - ₹)</label><input type="number" id="staff-pay-adj" class="w-full px-4 py-2.5 bg-slate-950 border border-slate-700 rounded-xl text-white font-mono font-bold text-base focus:border-indigo-500 transition-colors" placeholder="e.g. 500 or -200"></div>
+      <div class="flex justify-end space-x-3 pt-2">
+          <button onclick="closeStaffPay()" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl text-xs touch-btn transition-colors">Cancel</button>
+          <button onclick="confirmStaffPay()" class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs touch-btn shadow-md transition-colors">Update Ledger</button>
+      </div>
+  </div>
 </div>
 
 <script src="js/config.js"></script>

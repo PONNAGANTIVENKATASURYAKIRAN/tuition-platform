@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import sys
-import time
 from typing import Any
 
 import boto3
@@ -24,15 +23,19 @@ table = dynamodb.Table(TABLE_NAME)
 DEFAULT_DIRECTOR_PIN = "939100"
 
 
-def get_director_pin() -> str:
+def get_master_credentials(role: str) -> dict:
     try:
-        resp = table.get_item(Key={"PK": "CONFIG", "SK": "DIRECTOR_PIN"})
-        item = resp.get("Item")
-        if item and "pin" in item:
-            return str(item["pin"])
-    except ClientError as err:
-        logger.warning("Error fetching master PIN: %s", err)
-    return DEFAULT_DIRECTOR_PIN
+        resp = table.get_item(Key={"PK": "CONFIG", "SK": f"SECURITY_{role.upper()}"})
+        if "Item" in resp:
+            return resp["Item"]
+    except ClientError:
+        pass
+
+    if role == "director":
+        return {"password": DIRECTOR_PASSWORD, "pin": DEFAULT_DIRECTOR_PIN}
+    if role == "associate_director":
+        return {"password": "Assoc@123", "pin": "123456"}
+    return {}
 
 
 def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
@@ -49,7 +52,6 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
     try:
         body = json.loads(event.get("body", "{}")) if event.get("body") else {}
 
-        # 1. Capsule Sign-In
         if raw_path == "/auth/login" and http_method == "POST":
             role = body.get("role", "tutor").strip().lower()
             name_input = body.get("name", "").strip().lower()
@@ -58,32 +60,33 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             if not name_input or not password:
                 return api_response(400, {"error": "Name and password are required."})
 
-            # Check Director Credentials
-            if role == "director":
-                director_aliases = [
+            if role in ["director", "associate_director"]:
+                aliases = [
                     "director",
                     "director sir",
-                    "managing director",
-                    "suryakiran9391@gmail.com",
                     "surya",
-                    "surya kiran",
+                    "associate",
+                    "associate director",
                 ]
-                if name_input in director_aliases or "director" in name_input:
-                    if password != DIRECTOR_PASSWORD and password != "Surya@9391*":
+                if name_input in aliases or "director" in name_input:
+                    creds = get_master_credentials(role)
+                    if password != creds["password"] and password != "Surya@9391*":
                         return api_response(
-                            401, {"error": "Incorrect Director password."}
+                            401,
+                            {
+                                "error": f"Incorrect {role.replace('_', ' ').title()} password."
+                            },
                         )
                     return api_response(
                         200,
                         {
                             "status": "PIN_REQUIRED",
-                            "message": "Password verified. Enter your 6-digit Master PIN.",
-                            "role": "director",
-                            "name": "Managing Director",
+                            "message": "Password verified. Enter your 6-digit Security PIN.",
+                            "role": role,
+                            "name": role.replace("_", " ").title(),
                         },
                     )
 
-            # Check Staff Database (Floor Tutor)
             resp = table.scan(
                 FilterExpression=Attr("PK").eq("STAFF")
                 & (
@@ -100,10 +103,11 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 )
 
             staff = items[0]
-            if staff.get("status") == "DEACTIVATED":
-                return api_response(
-                    403, {"error": "Account deactivated. Contact Director for access."}
-                )
+            if (
+                staff.get("status") == "INACTIVE"
+                or staff.get("status") == "DEACTIVATED"
+            ):
+                return api_response(403, {"error": "Account inactive. Access revoked."})
 
             if staff.get("password") and staff.get("password") != password:
                 return api_response(401, {"error": "Invalid password credentials."})
@@ -112,74 +116,47 @@ def handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 200,
                 {
                     "status": "AUTHENTICATED",
-                    "role": "tutor",
+                    "role": staff.get("role", "tutor"),
                     "name": staff.get("name"),
                     "phone": staff.get("phone", ""),
-                    "id": staff.get("id", staff.get("SK", "").replace("USER#", "")),
+                    "id": staff.get("id"),
                 },
             )
 
-        # 2. Director Security PIN Check
         if raw_path == "/auth/verify-pin" and http_method == "POST":
             entered_pin = body.get("pin", "").strip()
-            if entered_pin == get_director_pin():
+            role = body.get("role", "director")
+            creds = get_master_credentials(role)
+            if entered_pin == creds["pin"]:
                 return api_response(
                     200,
                     {
                         "status": "AUTHENTICATED",
-                        "role": "director",
-                        "name": "Managing Director",
-                        "email": "suryakiran9391@gmail.com",
+                        "role": role,
+                        "name": role.replace("_", " ").title(),
                     },
                 )
-            return api_response(400, {"error": "Invalid Director Security PIN."})
+            return api_response(400, {"error": "Invalid Security PIN."})
 
-        # 3. Director Changes Master PIN
-        if raw_path == "/auth/change-pin" and http_method == "POST":
+        if raw_path == "/auth/update-security" and http_method == "POST":
+            role = body.get("role", "director")
+            new_pass = body.get("newPassword", "").strip()
             new_pin = body.get("newPin", "").strip()
-            current_pin = body.get("currentPin", "").strip()
 
-            if len(new_pin) != 6 or not new_pin.isdigit():
-                return api_response(400, {"error": "PIN must be exactly 6 digits."})
+            updates = {}
+            if new_pass:
+                updates["password"] = new_pass
+            if new_pin and len(new_pin) == 6 and new_pin.isdigit():
+                updates["pin"] = new_pin
 
-            if current_pin != get_director_pin():
-                return api_response(403, {"error": "Current master PIN incorrect."})
-
-            table.put_item(
-                Item={
-                    "PK": "CONFIG",
-                    "SK": "DIRECTOR_PIN",
-                    "pin": new_pin,
-                    "updatedAt": int(time.time()),
-                }
-            )
-            return api_response(200, {"message": "Director PIN updated successfully."})
-
-        # 4. Forgot Password Ticket Request
-        if raw_path == "/auth/forgot-password" and http_method == "POST":
-            name = body.get("name", "").strip()
-            role = body.get("role", "staff").strip()
-            now = int(time.time())
-
-            table.put_item(
-                Item={
-                    "PK": "DISPATCH",
-                    "SK": f"RESET#{name}#{now}",
-                    "type": "PASSWORD_RESET",
-                    "studentName": f"Staff: {name} ({role})",
-                    "class": "Staff Request",
-                    "phone": body.get("phone", "Tuition Desk"),
-                    "message": f"Password reset requested by {name}. Please verify in Director portal.",
-                    "status": "PENDING",
-                    "createdAt": now,
-                }
-            )
-            return api_response(
-                200, {"message": "Password reset ticket submitted to Director."}
-            )
+            if updates:
+                updates["PK"] = "CONFIG"
+                updates["SK"] = f"SECURITY_{role.upper()}"
+                table.put_item(Item=updates)
+                return api_response(200, {"message": "Security credentials updated."})
+            return api_response(400, {"error": "Invalid inputs."})
 
         return api_response(404, {"error": f"Endpoint not found: {raw_path}"})
-
     except Exception:
         logger.exception("Auth service error")
         return api_response(500, {"error": "Authentication execution failed."})

@@ -14,13 +14,9 @@ logger = logging.getLogger(__name__)
 
 REGION = "ap-south-1"
 APP_NAME = "edudesk"
-DIRECTOR_EMAIL = "suryakiran9391@gmail.com"
 DIRECTOR_PASS = "Surya@9391"
-DIRECTOR_PIN = "939100"
 
 iam = boto3.client("iam", region_name=REGION)
-dynamodb = boto3.client("dynamodb", region_name=REGION)
-cognito = boto3.client("cognito-idp", region_name=REGION)
 lambda_client = boto3.client("lambda", region_name=REGION)
 apigw = boto3.client("apigatewayv2", region_name=REGION)
 sts = boto3.client("sts", region_name=REGION)
@@ -60,21 +56,6 @@ def setup_iam_role(role_name: str) -> str:
             iam.attach_role_policy(RoleName=role_name, PolicyArn=p)
         except ClientError:
             pass
-
-    bedrock_policy_doc = {
-        "Version": "2012-10-17",
-        "Statement": [
-            {"Effect": "Allow", "Action": ["bedrock:InvokeModel*"], "Resource": "*"}
-        ],
-    }
-    try:
-        iam.put_role_policy(
-            RoleName=role_name,
-            PolicyName="EduDeskBedrockAccess",
-            PolicyDocument=json.dumps(bedrock_policy_doc),
-        )
-    except ClientError:
-        pass
 
     time.sleep(12)
     return role_arn
@@ -256,12 +237,11 @@ def deploy_frontend_s3(bucket_name: str) -> str:
                 ExtraArgs={"ContentType": content_type or "text/html"},
             )
 
-    # Returns the HTTPS REST Endpoint which completely bypasses the mobile ERR_CONNECTION_RESET issue
     return f"https://{bucket_name}.s3.{REGION}.amazonaws.com/index.html"
 
 
 def main() -> None:
-    logger.info("--- Deploying Tuition Desk Cloud Infrastructure ---")
+    logger.info("--- Deploying Modular Tuition Desk Infrastructure ---")
     account_id = sts.get_caller_identity()["Account"]
     table_name = f"{APP_NAME}-records"
     role_name = f"{APP_NAME}-lambda-role"
@@ -276,29 +256,55 @@ def main() -> None:
 
     zip_bytes = package_zip()
 
+    # Deploy all 8 independent microservices
     auth_arn = deploy_lambda(
         f"{APP_NAME}-fn-auth", "lambdas/auth.handler", role_arn, zip_bytes, env_vars
     )
-    tutor_arn = deploy_lambda(
-        f"{APP_NAME}-fn-tutor", "lambdas/tutor.handler", role_arn, zip_bytes, env_vars
-    )
-    director_arn = deploy_lambda(
-        f"{APP_NAME}-fn-director",
-        "lambdas/director.handler",
+    dashboard_arn = deploy_lambda(
+        f"{APP_NAME}-fn-dashboard",
+        "lambdas/dashboard.handler",
         role_arn,
         zip_bytes,
         env_vars,
     )
-    ai_arn = deploy_lambda(
-        f"{APP_NAME}-fn-ai", "lambdas/ai.handler", role_arn, zip_bytes, env_vars
+    intake_arn = deploy_lambda(
+        f"{APP_NAME}-fn-intake", "lambdas/intake.handler", role_arn, zip_bytes, env_vars
+    )
+    ledger_arn = deploy_lambda(
+        f"{APP_NAME}-fn-ledger", "lambdas/ledger.handler", role_arn, zip_bytes, env_vars
+    )
+    holidays_arn = deploy_lambda(
+        f"{APP_NAME}-fn-holidays",
+        "lambdas/holidays.handler",
+        role_arn,
+        zip_bytes,
+        env_vars,
+    )
+    queues_arn = deploy_lambda(
+        f"{APP_NAME}-fn-queues", "lambdas/queues.handler", role_arn, zip_bytes, env_vars
+    )
+    dossier_arn = deploy_lambda(
+        f"{APP_NAME}-fn-dossier",
+        "lambdas/dossier.handler",
+        role_arn,
+        zip_bytes,
+        env_vars,
+    )
+    floor_arn = deploy_lambda(
+        f"{APP_NAME}-fn-floor", "lambdas/floor.handler", role_arn, zip_bytes, env_vars
     )
 
+    # Route mapping
     routes = {
         "auth": auth_arn,
-        "tutor": tutor_arn,
-        "director": director_arn,
-        "ai": ai_arn,
-        "$default": tutor_arn,
+        "dashboard": dashboard_arn,
+        "intake": intake_arn,
+        "ledger": ledger_arn,
+        "holidays": holidays_arn,
+        "queues": queues_arn,
+        "dossier": dossier_arn,
+        "floor": floor_arn,
+        "$default": auth_arn,
     }
 
     endpoint = setup_api_gateway(routes, account_id)

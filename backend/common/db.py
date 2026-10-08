@@ -48,6 +48,7 @@ class DB:
         late_slot: str,
         marked_by: str,
         student_info: dict[str, Any],
+        remarks: str = "",
     ) -> None:
         now = int(time.time())
         table.put_item(
@@ -57,7 +58,9 @@ class DB:
                 "status": status,
                 "lateSlot": late_slot,
                 "markedBy": marked_by,
-                "studentName": student_info.get("name"),
+                "remarks": remarks,
+                "studentName": student_info.get("name")
+                or f"{student_info.get('firstName', '')} {student_info.get('lastName', '')}",
                 "class": student_info.get("class"),
                 "school": student_info.get("school"),
                 "updatedAt": now,
@@ -67,22 +70,18 @@ class DB:
         dispatch_key = {"PK": "DISPATCH", "SK": f"MSG#{student_id}#{date_str}"}
 
         if status == "ABSENT":
-            parent_phone = (
-                student_info.get("primaryPhone")
-                or student_info.get("fatherPhone")
-                or student_info.get("motherPhone")
+            parent_phone = student_info.get("fatherPhone") or student_info.get(
+                "motherPhone"
             )
-            msg_text = (
-                f"Namaste. Your ward {student_info.get('name')} "
-                f"(Class {student_info.get('class')}) has not arrived at tuition "
-                f"today ({date_str}). Please contact Director desk to confirm their safety."
-            )
+            name = student_info.get("name") or student_info.get("firstName", "")
+            reason_text = f" Reason noted: {remarks}." if remarks else ""
+            msg_text = f"Namaste. Your ward {name} (Class {student_info.get('class')}) was marked absent today ({date_str}).{reason_text} Please contact the Director to confirm."
             table.put_item(
                 Item={
                     **dispatch_key,
                     "type": "ABSENT_ALERT",
                     "studentId": student_id,
-                    "studentName": student_info.get("name"),
+                    "studentName": name,
                     "class": student_info.get("class"),
                     "school": student_info.get("school"),
                     "phone": parent_phone,
@@ -94,8 +93,8 @@ class DB:
         else:
             try:
                 table.delete_item(Key=dispatch_key)
-            except ClientError as err:
-                logger.warning("Queue cleanup skipped: %s", err)
+            except ClientError:
+                pass
 
     @staticmethod
     def log_slip_test(
@@ -118,10 +117,12 @@ class DB:
         pct = round((m_obt / m_max) * 100, 1) if m_max > 0 else 0.0
         now = int(time.time())
 
+        test_id = f"TEST#{date_str}#{subject}#{now}"
         table.put_item(
             Item={
                 "PK": f"STUDENT#{student_id}",
-                "SK": f"TEST#{date_str}#{subject}#{now}",
+                "SK": test_id,
+                "id": test_id,
                 "date": date_str,
                 "subject": subject,
                 "chapter": chapter,
@@ -138,26 +139,18 @@ class DB:
         )
 
         if send_to_parent:
-            parent_phone = (
-                student_info.get("primaryPhone")
-                or student_info.get("fatherPhone")
-                or student_info.get("motherPhone")
+            parent_phone = student_info.get("fatherPhone") or student_info.get(
+                "motherPhone"
             )
-            msg_text = (
-                f"Weekly Slip Test Report for {student_info.get('name')}:\n"
-                f"Subject: {subject}\n"
-                f"Topic: {chapter} ({subtopic})\n"
-                f"Score: {m_obt}/{m_max} ({pct}%)\n"
-                f"Evaluator: {evaluator}\n"
-                f"Remarks: {remarks}"
-            )
+            name = student_info.get("name") or student_info.get("firstName", "")
+            msg_text = f"Slip Test Report for {name}:\nSubject: {subject}\nTopic: {chapter} ({subtopic})\nScore: {m_obt}/{m_max} ({pct}%)\nRemarks: {remarks}"
             table.put_item(
                 Item={
                     "PK": "DISPATCH",
                     "SK": f"TEST#{student_id}#{now}",
                     "type": "SLIP_TEST_REPORT",
                     "studentId": student_id,
-                    "studentName": student_info.get("name"),
+                    "studentName": name,
                     "class": student_info.get("class"),
                     "phone": parent_phone,
                     "message": msg_text,
@@ -168,17 +161,5 @@ class DB:
         return pct
 
     @staticmethod
-    def get_upcoming_exams(classes: list[str]) -> list[dict[str, Any]]:
-        today_epoch = int(time.time())
-        three_days_epoch = today_epoch + (3 * 86400)
-        resp = table.scan(FilterExpression=Attr("PK").begins_with("EXAM#"))
-        items = resp.get("Items", [])
-        upcoming = []
-        for itm in items:
-            exam_epoch = int(itm.get("dateEpoch", 0))
-            is_matching = str(itm.get("class")) in [str(c) for c in classes]
-            if is_matching and (today_epoch <= exam_epoch <= three_days_epoch):
-                days_left = max(1, round((exam_epoch - today_epoch) / 86400))
-                itm["daysLeft"] = days_left
-                upcoming.append(itm)
-        return upcoming
+    def delete_record(pk: str, sk: str) -> None:
+        table.delete_item(Key={"PK": pk, "SK": sk})
