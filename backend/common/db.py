@@ -69,13 +69,16 @@ class DB:
 
         dispatch_key = {"PK": "DISPATCH", "SK": f"MSG#{student_id}#{date_str}"}
 
-        if status == "ABSENT":
+        if status == "ABSENT" or status == "EARLY LEAVE":
             parent_phone = student_info.get("fatherPhone") or student_info.get(
                 "motherPhone"
             )
             name = student_info.get("name") or student_info.get("firstName", "")
             reason_text = f" Reason noted: {remarks}." if remarks else ""
-            msg_text = f"Namaste. Your ward {name} (Class {student_info.get('class')}) was marked absent today ({date_str}).{reason_text} Please contact the Director to confirm."
+            action_verb = (
+                "marked absent" if status == "ABSENT" else "granted early leave"
+            )
+            msg_text = f"Namaste. Your ward {name} (Class {student_info.get('class')}) was {action_verb} today ({date_str}).{reason_text} Please contact the Director to confirm."
             table.put_item(
                 Item={
                     **dispatch_key,

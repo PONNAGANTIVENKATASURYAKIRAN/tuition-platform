@@ -18,7 +18,6 @@
       <p class="text-xs text-slate-400">Institutional Supervision Portal</p>
     </div>
 
-    <!-- 2-Role Capsule: Director vs Floor Tutor -->
     <div class="grid grid-cols-2 p-1 bg-slate-900 rounded-2xl border border-slate-800 text-xs font-bold text-slate-400">
       <button type="button" id="cap-director" onclick="selectRole('director')" class="py-2.5 rounded-xl bg-indigo-600 text-white shadow-md transition-all">
         Director Desk
@@ -28,7 +27,6 @@
       </button>
     </div>
 
-    <!-- Sign In Form -->
     <form id="login-form" onsubmit="handleCapsuleLogin(event)" class="space-y-4">
       <div>
         <label id="label-name" class="block text-[11px] font-bold text-slate-400 uppercase mb-1 tracking-wider">Director Name / ID</label>
@@ -37,7 +35,6 @@
       <div>
         <div class="flex justify-between items-center mb-1">
           <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Password</label>
-          <button type="button" onclick="promptForgotPasswordTicket()" class="text-[11px] text-indigo-400 hover:text-indigo-300">Forgot Password?</button>
         </div>
         <input type="password" id="login-password" required class="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500" placeholder="••••••••" />
       </div>
@@ -46,11 +43,10 @@
       </button>
     </form>
 
-    <!-- Director Master Security PIN Prompt -->
     <div id="pin-section" class="hidden space-y-4">
       <div class="p-3 bg-indigo-500/10 border border-indigo-500/30 rounded-xl text-center">
         <p class="text-xs text-indigo-300 font-semibold"><i class="fa-solid fa-shield-halved mr-1"></i> Master Authority Verification</p>
-        <p class="text-[11px] text-slate-400 mt-0.5">Enter 6-digit Director Security PIN</p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Enter 6-digit Security PIN</p>
       </div>
       <input type="password" id="director-pin" maxlength="6" class="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-center text-xl tracking-widest text-white focus:outline-none focus:border-indigo-500 font-mono" placeholder="••••••" />
       <button type="button" onclick="verifyDirectorPIN()" id="btn-verify-pin" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-emerald-600/30 touch-btn">
@@ -64,88 +60,6 @@
 
   <script src="js/config.js"></script>
   <script src="js/api.js"></script>
-  <script>
-    let activeRole = "director";
-
-    function selectRole(role) {
-      activeRole = role;
-      document.getElementById("pin-section").classList.add("hidden");
-      document.getElementById("login-form").classList.remove("hidden");
-
-      const bDir = document.getElementById("cap-director");
-      const bTut = document.getElementById("cap-tutor");
-      if (role === "director") {
-        bDir.className = "py-2.5 rounded-xl bg-indigo-600 text-white shadow-md transition-all";
-        bTut.className = "py-2.5 rounded-xl text-slate-400 hover:text-slate-200 transition-all";
-        document.getElementById("label-name").textContent = "Director Name / ID";
-        document.getElementById("login-name").value = "Director Sir";
-      } else {
-        bTut.className = "py-2.5 rounded-xl bg-indigo-600 text-white shadow-md transition-all";
-        bDir.className = "py-2.5 rounded-xl text-slate-400 hover:text-slate-200 transition-all";
-        document.getElementById("label-name").textContent = "Floor Tutor Name / Phone";
-        document.getElementById("login-name").value = "";
-        document.getElementById("login-name").placeholder = "e.g. Srinivas or 9848011223";
-      }
-    }
-
-    async function handleCapsuleLogin(e) {
-      e.preventDefault();
-      const name = document.getElementById("login-name").value.trim();
-      const password = document.getElementById("login-password").value.trim();
-      const btn = document.getElementById("btn-login");
-
-      btn.disabled = true;
-      btn.textContent = "Authenticating...";
-
-      const { ok, data } = await API.post("/auth/login", { role: activeRole, name, password });
-      btn.disabled = false;
-      btn.textContent = "Access Portal";
-
-      if (!ok) {
-        alert(data.error || "Authentication failed. Check credentials.");
-        return;
-      }
-
-      if (data.status === "PIN_REQUIRED") {
-        document.getElementById("login-form").classList.add("hidden");
-        document.getElementById("pin-section").classList.remove("hidden");
-        document.getElementById("director-pin").focus();
-      } else if (data.status === "AUTHENTICATED") {
-        localStorage.setItem("tuition_user", JSON.stringify(data));
-        window.location.href = "tutor.html";
-      }
-    }
-
-    async function verifyDirectorPIN() {
-      const pin = document.getElementById("director-pin").value.trim();
-      const btn = document.getElementById("btn-verify-pin");
-      btn.disabled = true;
-      btn.textContent = "Verifying PIN...";
-
-      const { ok, data } = await API.post("/auth/verify-pin", { pin });
-      btn.disabled = false;
-      btn.textContent = "Verify Security PIN";
-
-      if (ok && data.status === "AUTHENTICATED") {
-        localStorage.setItem("tuition_user", JSON.stringify(data));
-        window.location.href = "director.html";
-      } else {
-        alert(data.error || "Invalid Security PIN.");
-      }
-    }
-
-    function cancelPINChallenge() {
-      document.getElementById("pin-section").classList.add("hidden");
-      document.getElementById("login-form").classList.remove("hidden");
-    }
-
-    async function promptForgotPasswordTicket() {
-      const name = prompt("Enter your registered Name:");
-      if (!name) return;
-      const phone = prompt("Enter your Contact Phone Number:");
-      const { ok, data } = await API.post("/auth/forgot-password", { role: activeRole, name, phone });
-      alert(data.message || "Reset request submitted to Director.");
-    }
-  </script>
+  <script src="js/auth.js"></script>
 </body>
 </html>

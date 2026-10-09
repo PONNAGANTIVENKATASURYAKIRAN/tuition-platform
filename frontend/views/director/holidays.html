@@ -1,0 +1,30 @@
+<div class="space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h2 class="text-sm font-extrabold text-white uppercase tracking-wider">Holiday Management</h2>
+    </div>
+    
+    <div class="p-4 bg-slate-900 border border-slate-800 rounded-xl shadow-xs space-y-4">
+        <div class="flex items-center space-x-2 text-pink-400">
+            <i class="fa-solid fa-calendar-day"></i>
+            <h3 class="font-extrabold text-xs uppercase">Publish Global or Partial Holiday</h3>
+        </div>
+        <p class="text-[10px] text-slate-400">Published holidays automatically block 24-hour locks and balance the monthly attendance calculation for all staff and students.</p>
+        
+        <form onsubmit="handlePublishHoliday(event)" class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+                <div><label class="block text-[10px] font-bold text-slate-400 mb-1">DATE *</label><input type="date" id="hol-date" required class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs font-mono focus:border-indigo-500"></div>
+                <div><label class="block text-[10px] font-bold text-slate-400 mb-1">OCCASION / REASON *</label><input type="text" id="hol-occ" required placeholder="e.g. Diwali, Heavy Rain" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500"></div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold text-slate-400 mb-1">EXEMPT CLASSES (PARTIAL HOLIDAY)</label>
+                <input type="text" id="hol-exempt" placeholder="e.g. 10, Inter 2 (Leave blank for full school holiday)" class="w-full px-3 py-2 bg-slate-950 border border-slate-700 rounded-lg text-white text-xs focus:border-indigo-500">
+            </div>
+            <button type="submit" class="w-full py-2.5 bg-pink-600 hover:bg-pink-500 text-white font-bold rounded-lg text-xs touch-btn shadow-md transition-colors">Publish to All Calendars</button>
+        </form>
+    </div>
+    
+    <div class="space-y-2">
+        <h4 class="font-extrabold text-white text-xs uppercase tracking-wider border-b border-slate-800 pb-1">Active Declared Holidays</h4>
+        <div id="holidays-list" class="space-y-2"></div>
+    </div>
+</div>

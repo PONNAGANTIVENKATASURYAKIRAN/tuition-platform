@@ -1,0 +1,89 @@
+<div class="space-y-4">
+  <div class="grid grid-cols-3 gap-2 text-center text-xs">
+    <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-xs flex flex-col justify-center">
+      <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-widest">Total Present</span>
+      <span id="stat-tutor-present" class="text-2xl font-mono font-bold text-emerald-400 mt-1 block">0</span>
+    </div>
+    <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-xs flex flex-col justify-center">
+      <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-widest">Total Absent</span>
+      <span id="stat-tutor-absent" class="text-2xl font-mono font-bold text-rose-400 mt-1 block">0</span>
+    </div>
+    <div class="p-3 bg-slate-900 rounded-2xl border border-slate-800 shadow-xs flex flex-col justify-center">
+      <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-widest">Tests Logged</span>
+      <span id="stat-tutor-tests" class="text-2xl font-mono font-bold text-indigo-400 mt-1 block">0</span>
+    </div>
+  </div>
+
+  <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-xs space-y-4">
+    <div class="flex flex-wrap items-center justify-between text-[11px] font-bold text-slate-400 border-b border-slate-800 pb-2">
+      <span>ROSTER FILTERS</span>
+      <button onclick="window.loadStudentsFast()" class="text-indigo-400 hover:text-indigo-300 transition-colors"><i class="fa-solid fa-rotate-right mr-1"></i> Refresh Data</button>
+    </div>
+    
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-wider">Class / Grade</label>
+        <select id="filter-tutor-class" onchange="window.handleTutorClassChange()" class="w-full px-2.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:border-indigo-500 outline-none transition-colors appearance-none">
+          <option value="ALL">All Classes</option>
+          <option value="1">Class 1</option><option value="2">Class 2</option><option value="3">Class 3</option>
+          <option value="4">Class 4</option><option value="5">Class 5</option><option value="6">Class 6</option>
+          <option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option>
+          <option value="10">Class 10</option>
+          <option value="Inter 1">Inter 1st Year</option>
+          <option value="Inter 2">Inter 2nd Year</option>
+          <option value="B.Tech">B.Tech</option>
+        </select>
+      </div>
+      
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-wider">Board / Stream</label>
+        <select id="filter-tutor-board" onchange="window.renderRoster()" class="w-full px-2.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:border-indigo-500 outline-none transition-colors appearance-none">
+          <option value="ALL">All Boards / Streams</option>
+          <option value="SSC">SSC (State Board)</option>
+          <option value="CBSE">CBSE</option>
+          <option value="ICSE">ICSE</option>
+        </select>
+      </div>
+      
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-wider">Gender</label>
+        <select id="filter-tutor-gender" onchange="window.renderRoster()" class="w-full px-2.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:border-indigo-500 outline-none transition-colors appearance-none">
+          <option value="ALL">All Genders</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+      
+      <div class="space-y-1">
+        <label class="block text-[9px] font-bold text-slate-500 uppercase tracking-wider">Performance Tier</label>
+        <select id="filter-tutor-percentage" onchange="window.renderRoster()" class="w-full px-2.5 py-2 bg-slate-950 border border-slate-700 rounded-xl text-white text-xs focus:border-indigo-500 outline-none transition-colors appearance-none">
+          <option value="ALL">All Scores</option>
+          <option value="NEEDS_HELP">Needs Help (&lt; 50%)</option>
+          <option value="AVERAGE">Average (50% - 74%)</option>
+          <option value="EXCELLENT">Excellent (75% - 89%)</option>
+          <option value="PERFECT">Perfect (Above 90%)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-slate-900 rounded-2xl border border-slate-800 p-4 shadow-xs space-y-4">
+    <div class="flex flex-wrap gap-2 text-[10px] font-bold">
+      <button id="tab-btn-all" onclick="window.switchRosterBucket('ALL')" class="px-4 py-2 rounded-xl bg-indigo-600 text-white shadow-md transition-colors border border-indigo-500">All</button>
+      <button id="tab-btn-present" onclick="window.switchRosterBucket('present')" class="px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 hover:text-white transition-colors text-slate-400">Present</button>
+      <button id="tab-btn-absent" onclick="window.switchRosterBucket('absent')" class="px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 hover:text-white transition-colors text-slate-400">Absent</button>
+      <button id="tab-btn-late" onclick="window.switchRosterBucket('late')" class="px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 hover:text-white transition-colors text-slate-400">Late</button>
+      <button id="tab-btn-earlyleave" onclick="window.switchRosterBucket('early leave')" class="px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 hover:text-white transition-colors text-slate-400">Early Leave</button>
+      <button id="tab-btn-unmarked" onclick="window.switchRosterBucket('unmarked')" class="px-4 py-2 rounded-xl bg-slate-950 border border-slate-800 hover:text-white transition-colors text-slate-400">Unmarked</button>
+    </div>
+    
+    <div class="flex items-center space-x-2">
+      <div class="relative flex-1">
+        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+        <input type="text" id="tutor-search-input" oninput="window.renderRoster()" placeholder="Search students by name..." class="w-full pl-9 pr-4 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:border-indigo-500 outline-none transition-colors">
+      </div>
+    </div>
+  </div>
+
+  <div id="student-roster-list" class="space-y-2.5"></div>
+</div>

@@ -1,0 +1,26 @@
+<div class="space-y-4">
+    <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+        <h2 class="text-sm font-extrabold text-white uppercase tracking-wider">WhatsApp Queues</h2>
+        <button onclick="loadDispatchQueue()" class="text-xs text-indigo-400 font-bold touch-btn"><i class="fa-solid fa-arrows-rotate mr-1"></i> Sync</button>
+    </div>
+    
+    <!-- Global Queue Filters -->
+    <div class="grid grid-cols-2 gap-2 mb-2">
+        <select id="queue-filter-class" onchange="filterQueue(activeQueueFilter)" class="px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-500">
+            <option value="ALL">All Classes</option><option value="1">Class 1</option><option value="2">Class 2</option><option value="3">Class 3</option><option value="4">Class 4</option><option value="5">Class 5</option><option value="6">Class 6</option><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="Inter 1">Inter 1</option><option value="Inter 2">Inter 2</option><option value="B.Tech">B.Tech</option>
+        </select>
+        <select id="queue-filter-gender" onchange="filterQueue(activeQueueFilter)" class="px-2 py-1.5 bg-slate-900 border border-slate-800 rounded-xl text-white text-xs focus:outline-none focus:border-indigo-500">
+            <option value="ALL">All Genders</option><option value="Male">Male</option><option value="Female">Female</option>
+        </select>
+    </div>
+    
+    <!-- Category Tabs -->
+    <div class="grid grid-cols-4 p-1 bg-slate-900 rounded-xl border border-slate-800 text-[10px] font-bold text-slate-400">
+        <button id="qcat-all" onclick="filterQueue('ALL')" class="py-2 rounded-lg bg-indigo-600 text-white transition-colors shadow-sm">All</button>
+        <button id="qcat-absent" onclick="filterQueue('ABSENT_ALERT')" class="py-2 rounded-lg hover:text-white transition-colors">Absentees</button>
+        <button id="qcat-fees" onclick="filterQueue('FEE_REMINDER')" class="py-2 rounded-lg hover:text-white transition-colors">Fees Due</button>
+        <button id="qcat-disc" onclick="filterQueue('DISCIPLINE')" class="py-2 rounded-lg hover:text-white transition-colors">Discipline</button>
+    </div>
+    
+    <div id="queue-cards-list" class="space-y-3"></div>
+</div>

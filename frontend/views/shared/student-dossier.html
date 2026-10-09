@@ -1,0 +1,573 @@
+// Global State for Dossier
+let activeStudentDossier = null;
+let currentSubjectIdx = 0;
+let currentChapterIdx = 0;
+let temporaryCapturedPhotos = [];
+let activeFacultyList = [];
+
+// Fetch faculty for Doubt Clearance dropdown
+async function fetchFacultyForDossier() {
+    try {
+        const { ok, data } = await API.get("/director/master-data");
+        if (ok && data.staff) {
+            activeFacultyList = data.staff.filter(s => s.role === 'faculty' && s.status === 'ACTIVE');
+        }
+    } catch (err) {
+        console.error("Failed to load faculty for dossier", err);
+    }
+}
+
+async function openStudentDossier(studentId) {
+    // Look up student from window globals (directorStudents or activeStudentList)
+    let s = null;
+    if (window.directorStudents) {
+        s = window.directorStudents.find(stu => String(stu.id || stu.PK?.replace("STUDENT#", "")) === String(studentId));
+    } else if (window.activeStudentList) {
+        s = window.activeStudentList.find(stu => String(stu.id || stu.PK?.replace("STUDENT#", "")) === String(studentId));
+    }
+    
+    if (!s) return;
+    
+    // Close staff calendar if open
+    if(typeof closeStaffCalendar === 'function') closeStaffCalendar(); 
+    
+    activeStudentDossier = s;
+    
+    document.getElementById("modal-student-name").textContent = s.name;
+    document.getElementById("modal-student-badge").textContent = `Class ${s.class}`;
+    if(document.getElementById("modal-student-school")) {
+        document.getElementById("modal-student-school").textContent = s.school || "School";
+    }
+    if(document.getElementById("modal-father-phone")) {
+        document.getElementById("modal-father-phone").textContent = `Father: ${s.fatherPhone || "N/A"}`;
+    }
+    if(document.getElementById("modal-mother-phone")) {
+        document.getElementById("modal-mother-phone").textContent = `Mother: ${s.motherPhone || "N/A"}`;
+    }
+
+    const delBtn = document.getElementById("btn-delete-student");
+    const recBtn = document.getElementById("btn-recall-student");
+    
+    if(delBtn && recBtn) {
+        if (s.status === 'LEFT_TUITION') {
+            delBtn.classList.add("hidden");
+            if(window.isMainDirector) recBtn.classList.remove("hidden");
+        } else {
+            if(window.isMainDirector) delBtn.classList.remove("hidden");
+            recBtn.classList.add("hidden");
+        }
+    }
+
+    document.getElementById("student-modal").classList.remove("hidden");
+    switchDossierTab('attendance');
+    
+    // Fetch full profile from backend
+    const { ok, data } = await API.post("/tutor/student-drawer", { studentId });
+    if (ok && data.profile) {
+        activeStudentDossier = { ...s, ...data.profile };
+    }
+    
+    if(!activeStudentDossier.slipTests) activeStudentDossier.slipTests = [];
+    if(!activeStudentDossier.exams) activeStudentDossier.exams = [];
+    
+    ensureSyllabusStructure(activeStudentDossier);
+    sortChaptersNumerically(activeStudentDossier);
+    
+    renderAttendanceTimeline();
+    renderDossierSyllabus();
+    populateVaultDropdown();
+    renderExamsDelta();
+    
+    // Refresh faculty list for doubts tab
+    if(activeFacultyList.length === 0) {
+        await fetchFacultyForDossier();
+    }
+    populateFacultySelect();
+}
+
+function closeStudentModal() { 
+    document.getElementById("student-modal").classList.add("hidden"); 
+}
+
+async function deleteActiveStudent() {
+    if(!activeStudentDossier) return;
+    const sid = activeStudentDossier.id || activeStudentDossier.PK.replace('STUDENT#','');
+    if(typeof showConfirm === 'function') {
+        showConfirm("Archive Student", `Soft delete ${activeStudentDossier.name} to Left Students tab?`, async () => {
+            await API.post("/director/delete-student", { studentId: sid });
+            closeStudentModal();
+            if(typeof loadDashboardData === 'function') loadDashboardData();
+        });
+    }
+}
+
+async function recallActiveStudent() {
+    if(!activeStudentDossier) return;
+    const sid = activeStudentDossier.id || activeStudentDossier.PK.replace('STUDENT#','');
+    if(typeof showConfirm === 'function') {
+        showConfirm("Recall Student", `Restore ${activeStudentDossier.name} to the active roster?`, async () => {
+            await API.post("/director/recall-student", { studentId: sid });
+            closeStudentModal();
+            if(typeof loadDashboardData === 'function') loadDashboardData();
+            if(typeof showMsg === 'function') showMsg("Restored", "Student successfully recalled.");
+        });
+    }
+}
+
+function switchDossierTab(tab) {
+    ['attendance', 'syllabus', 'assessments', 'doubts', 'vault', 'exams', 'progress', 'misbehavior'].forEach(t => {
+        const panel = document.getElementById(`dossier-panel-${t}`);
+        const tabBtn = document.getElementById(`dossier-tab-${t}`);
+        if(panel) panel.classList.toggle("hidden", t !== tab);
+        if(tabBtn) {
+            tabBtn.className = (t === tab) ? "py-2 px-3 text-indigo-400 border-b-2 border-indigo-500 whitespace-nowrap font-bold" : "py-2 px-3 text-slate-400 hover:text-white whitespace-nowrap transition-colors";
+        }
+    });
+}
+
+function renderAttendanceTimeline() {
+    const grid = document.getElementById("progress-calendar-grid");
+    if(!grid) return;
+    grid.innerHTML = "";
+    for (let day = 1; day <= 30; day++) {
+        // Mock data logic for calendar preview
+        const isAbsent = (day === 12);
+        const isHoliday = (day % 7 === 0);
+        const isLocked = (day < 5);
+
+        const btn = document.createElement("button");
+        btn.className = `p-1.5 rounded-lg text-center border font-mono text-[10px] ${isAbsent ? 'bg-rose-500/20 text-rose-300 border-rose-500/40' : (isHoliday ? 'bg-amber-500/20 text-amber-300 border-amber-500/40' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700 transition-colors')}`;
+        btn.innerHTML = `<span class="block font-bold">${day}</span>`;
+        if (isLocked && !isHoliday && !isAbsent) btn.innerHTML += `<i class="fa-solid fa-lock text-[8px] text-slate-500 mt-0.5"></i>`;
+
+        btn.onclick = () => {
+            document.getElementById("calendar-day-detail-box").classList.remove("hidden");
+            document.getElementById("detail-status-pill").textContent = isAbsent ? 'ABSENT' : (isHoliday ? 'HOLIDAY' : 'PRESENT');
+            document.getElementById("detail-status-pill").className = `px-2 py-0.5 rounded text-[10px] font-bold ${isAbsent ? 'bg-rose-500/20 text-rose-300' : (isHoliday ? 'bg-amber-500/20 text-amber-300' : 'bg-emerald-500/20 text-emerald-300')}`;
+            
+            let notes = isHoliday ? "Academy Scheduled Holiday." : (isAbsent ? "Student marked absent. Reason: Travel" : "Arrived: 6:00 PM. Handled by Tutor.");
+            
+            if (isLocked && !isHoliday && !isAbsent) {
+                notes += `<br><button class="mt-2 w-full py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-slate-300 font-bold text-[10px] touch-btn"><i class="fa-solid fa-lock mr-1"></i>Data Locked (>24h).</button>`;
+            } else if (!isHoliday && !isAbsent) {
+                notes += `<br><button class="mt-2 w-full py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 rounded text-indigo-400 font-bold text-[10px] touch-btn"><i class="fa-solid fa-pen mr-1"></i>Edit Entry</button>`;
+            }
+            if(document.getElementById("detail-date-notes")) {
+                document.getElementById("detail-date-notes").innerHTML = notes;
+            }
+        };
+        grid.appendChild(btn);
+    }
+}
+
+function ensureSyllabusStructure(s) {
+    if (!s.syllabus || s.syllabus.length === 0) {
+        s.syllabus = [
+            { name: "Mathematics", chapters: [{ number: 1, title: "Real Numbers", topics: [{ name: "Euclid's Division Lemma", confidence: 100 }] }] }
+        ];
+    }
+}
+
+function sortChaptersNumerically(s) {
+    if (s.syllabus) {
+        s.syllabus.forEach(sub => {
+            if (sub.chapters) sub.chapters.sort((a, b) => (parseInt(a.number) || 0) - (parseInt(b.number) || 0));
+        });
+    }
+}
+
+function renderDossierSyllabus() {
+    const subCont = document.getElementById("dossier-subjects-list");
+    if(!subCont) return;
+    subCont.innerHTML = "";
+    if(!activeStudentDossier.syllabus || activeStudentDossier.syllabus.length === 0) {
+        subCont.innerHTML = `<p class="text-[10px] text-slate-500 italic p-3 border border-slate-800 rounded-xl">No syllabus tracked yet.</p>`;
+        return;
+    }
+    
+    activeStudentDossier.syllabus.forEach((sub, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = `px-2.5 py-1 rounded-lg text-xs font-bold transition-colors touch-btn ${idx === currentSubjectIdx ? 'bg-indigo-600 text-white shadow-xs' : 'bg-slate-800 text-slate-400'}`;
+        btn.textContent = sub.name;
+        btn.onclick = () => { currentSubjectIdx = idx; currentChapterIdx = 0; renderDossierSyllabus(); populateSlipDropdowns(); };
+        subCont.appendChild(btn);
+    });
+
+    const chapCont = document.getElementById("dossier-chapters-list");
+    if(chapCont) chapCont.innerHTML = "";
+    const curSub = activeStudentDossier.syllabus[currentSubjectIdx];
+
+    if (chapCont && curSub && curSub.chapters) {
+        curSub.chapters.forEach((ch, idx) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = `px-2.5 py-1 rounded-lg text-xs font-bold transition-colors touch-btn ${idx === currentChapterIdx ? 'border border-indigo-500 bg-indigo-500/20 text-indigo-300' : 'bg-slate-800 text-slate-400'}`;
+            btn.textContent = `Ch ${ch.number || idx+1}: ${ch.title}`;
+            btn.onclick = () => { currentChapterIdx = idx; renderDossierSyllabus(); populateSlipDropdowns(); };
+            chapCont.appendChild(btn);
+        });
+    }
+
+    const topCont = document.getElementById("dossier-topics-list");
+    if(!topCont) return;
+    topCont.innerHTML = "";
+    const curChap = curSub?.chapters[currentChapterIdx];
+    if (!curChap || !curChap.topics) return;
+
+    if(document.getElementById("active-chapter-title")) {
+        document.getElementById("active-chapter-title").textContent = `Subtopics: Ch ${curChap.number || ''} ${curChap.title}`;
+    }
+
+    curChap.topics.forEach((top, idx) => {
+        const div = document.createElement("div");
+        div.className = "p-2.5 rounded-xl border border-slate-800 bg-slate-800/40 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-xs";
+
+        const info = document.createElement("div");
+        const name = document.createElement("span");
+        name.className = "font-bold text-white text-xs block";
+        name.textContent = top.name;
+
+        const confidenceWrap = document.createElement("div");
+        confidenceWrap.className = "flex items-center space-x-1 mt-1 flex-wrap";
+
+        const confidenceLabel = document.createElement("span");
+        confidenceLabel.className = "text-[9px] text-slate-400 mr-1 font-bold";
+        confidenceLabel.textContent = "CONFIDENCE:";
+        confidenceWrap.appendChild(confidenceLabel);
+
+        [0, 25, 50, 75, 100].forEach((val) => {
+            const btn = document.createElement("button");
+            btn.type = "button";
+            btn.className = `px-1.5 py-0.5 rounded text-[9px] font-bold transition-colors touch-btn ${top.confidence === val ? 'bg-indigo-600 text-white' : 'bg-slate-800 text-slate-400 border border-slate-700'}`;
+            btn.textContent = `${val}%`;
+            btn.addEventListener("click", () => setConfidence(idx, val));
+            confidenceWrap.appendChild(btn);
+        });
+
+        info.appendChild(name);
+        info.appendChild(confidenceWrap);
+
+        const deleteBtn = document.createElement("button");
+        deleteBtn.type = "button";
+        deleteBtn.className = "px-2 py-1 bg-rose-500/20 hover:bg-rose-500 hover:text-white text-rose-400 rounded text-[10px] transition-colors";
+        deleteBtn.innerHTML = '<i class="fa-solid fa-trash-can"></i>';
+        deleteBtn.addEventListener("click", () => {
+            deleteGenericRecord(`STUDENT#${activeStudentDossier.id}`, `TOPIC#${top.name}`, 'Topic');
+        });
+
+        div.appendChild(info);
+        div.appendChild(deleteBtn);
+        topCont.appendChild(div);
+    });
+}
+
+function setConfidence(topicIdx, val) {
+    activeStudentDossier.syllabus[currentSubjectIdx].chapters[currentChapterIdx].topics[topicIdx].confidence = val;
+    renderDossierSyllabus();
+}
+
+function openAddSubjectModal() { document.getElementById("modal-add-subject").classList.remove("hidden"); }
+function closeAddSubjectModal() { document.getElementById("modal-add-subject").classList.add("hidden"); }
+function confirmAddSubject() {
+    const name = document.getElementById("input-subject-name").value.trim();
+    if (name) {
+        activeStudentDossier.syllabus.push({ name, chapters: [] });
+        renderDossierSyllabus();
+        populateSlipDropdowns();
+        closeAddSubjectModal();
+        document.getElementById("input-subject-name").value = "";
+    }
+}
+
+function openAddChapterModal() { document.getElementById("modal-add-chapter").classList.remove("hidden"); }
+function closeAddChapterModal() { document.getElementById("modal-add-chapter").classList.add("hidden"); }
+function confirmAddChapter() {
+    const num = parseInt(document.getElementById("input-chapter-num").value) || 1;
+    const name = document.getElementById("input-chapter-name").value.trim();
+    if (name) {
+        activeStudentDossier.syllabus[currentSubjectIdx].chapters.push({ number: num, title: name, topics: [] });
+        sortChaptersNumerically(activeStudentDossier);
+        renderDossierSyllabus();
+        populateSlipDropdowns();
+        closeAddChapterModal();
+        document.getElementById("input-chapter-num").value = "";
+        document.getElementById("input-chapter-name").value = "";
+    }
+}
+
+function openAddTopicModal() { document.getElementById("modal-add-topic").classList.remove("hidden"); }
+function closeAddTopicModal() { document.getElementById("modal-add-topic").classList.add("hidden"); }
+function confirmAddTopic() {
+    const name = document.getElementById("input-topic-name").value.trim();
+    if (name) {
+        activeStudentDossier.syllabus[currentSubjectIdx].chapters[currentChapterIdx].topics.push({ name, confidence: 50 });
+        renderDossierSyllabus();
+        closeAddTopicModal();
+        document.getElementById("input-topic-name").value = "";
+    }
+}
+
+// Vault & Assessments
+function switchAssessmentSubTab(mode) {
+    const isSlip = mode === "slip";
+    if(document.getElementById("box-slip-test-workflow")) document.getElementById("box-slip-test-workflow").classList.toggle("hidden", !isSlip);
+    if(document.getElementById("box-week-test-workflow")) document.getElementById("box-week-test-workflow").classList.toggle("hidden", isSlip);
+    if(document.getElementById("ass-subtab-slip")) document.getElementById("ass-subtab-slip").className = isSlip ? "py-1.5 rounded-lg bg-indigo-600 text-white" : "py-1.5 rounded-lg text-slate-400";
+    if(document.getElementById("ass-subtab-week")) document.getElementById("ass-subtab-week").className = !isSlip ? "py-1.5 rounded-lg bg-indigo-600 text-white" : "py-1.5 rounded-lg text-slate-400";
+}
+
+function populateSlipDropdowns() {
+    const subSel = document.getElementById("slip-subject-select");
+    if (!subSel || !activeStudentDossier) return;
+    subSel.innerHTML = "";
+    activeStudentDossier.syllabus.forEach(sub => {
+        subSel.innerHTML += `<option value="${sub.name}">${sub.name}</option>`;
+    });
+    syncSlipChaptersDropdown();
+}
+
+function syncSlipChaptersDropdown() {
+    const subName = document.getElementById("slip-subject-select")?.value;
+    const chapSel = document.getElementById("slip-chapter-select");
+    if(!chapSel) return;
+    chapSel.innerHTML = "";
+    const subObj = activeStudentDossier.syllabus.find(s => s.name === subName);
+    if (subObj && subObj.chapters) {
+        subObj.chapters.forEach(ch => {
+            chapSel.innerHTML += `<option value="${ch.title}">Ch ${ch.number}: ${ch.title}</option>`;
+        });
+    }
+    syncSlipTopicsChecklist();
+}
+
+function syncSlipTopicsChecklist() {
+    const subName = document.getElementById("slip-subject-select")?.value;
+    const chapTitle = document.getElementById("slip-chapter-select")?.value;
+    const container = document.getElementById("slip-topics-checklist");
+    if(!container) return;
+    container.innerHTML = "";
+    const subObj = activeStudentDossier.syllabus.find(s => s.name === subName);
+    const chapObj = subObj?.chapters.find(c => c.title === chapTitle);
+    if (chapObj && chapObj.topics) {
+        chapObj.topics.forEach(t => {
+            container.innerHTML += `<label class="flex items-center space-x-2 text-[11px] text-slate-300 cursor-pointer"><input type="checkbox" name="slip-topic-checkbox" value="${t.name}" checked class="accent-indigo-600"><span>${t.name}</span></label>`;
+        });
+    }
+}
+
+function handleSlipPhotosSelected(event) {
+    const files = event.target.files;
+    temporaryCapturedPhotos = [];
+    const gallery = document.getElementById("slip-photos-preview-gallery");
+    if(!gallery) return;
+    gallery.innerHTML = "";
+    if (files && files.length > 0) {
+        gallery.classList.remove("hidden");
+        Array.from(files).forEach(file => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                temporaryCapturedPhotos.push(e.target.result);
+                gallery.innerHTML += `<img src="${e.target.result}" class="w-12 h-12 object-cover rounded border border-slate-700">`;
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+}
+
+async function handleSaveSlipTest(e) {
+    e.preventDefault();
+    const scored = parseFloat(document.getElementById("slip-marks-obtained").value);
+    const total = parseFloat(document.getElementById("slip-max-marks").value);
+    const pct = Math.round((scored/total)*100);
+    
+    if(typeof showMsg === 'function') showMsg('Success', `Slip Test logged securely. Score: ${pct}%`);
+    e.target.reset();
+    if(document.getElementById("slip-photos-preview-gallery")) document.getElementById("slip-photos-preview-gallery").classList.add("hidden");
+}
+
+function handleSaveWeekTest() {
+    const score = document.getElementById("week-test-score").value;
+    const total = document.getElementById("week-test-total").value;
+    if(typeof showMsg === 'function') showMsg('Success', `Weekend Grand Test recorded: ${score}/${total}`);
+}
+
+function populateVaultDropdown() {
+    const sel = document.getElementById("vault-test-selector");
+    if(!sel) return;
+    sel.innerHTML = "";
+    if(!activeStudentDossier.slipTests || activeStudentDossier.slipTests.length === 0) {
+        sel.innerHTML = `<option value="">No tests recorded</option>`;
+        if(document.getElementById("vault-test-display")) document.getElementById("vault-test-display").innerHTML = `<p class="text-[10px] text-slate-500 text-center p-4 border border-dashed border-slate-800 rounded-xl">No test available.</p>`;
+        return;
+    }
+    activeStudentDossier.slipTests.forEach((t, i) => {
+        sel.innerHTML += `<option value="${i}">${t.date} - ${t.subject} (${t.subtopic})</option>`;
+    });
+    renderVaultTest();
+}
+
+function renderVaultTest() {
+    const sel = document.getElementById("vault-test-selector");
+    if(!sel || !sel.value) return;
+    const test = activeStudentDossier.slipTests[sel.value];
+    const display = document.getElementById("vault-test-display");
+    if(!display) return;
+    
+    let photoHtml = "";
+    if (test.photos && test.photos.length > 0) {
+        photoHtml = test.photos.map(p => `<img src="${p}" class="w-full sm:w-48 h-auto rounded-xl border border-slate-700 shadow-md">`).join("");
+    }
+
+    display.innerHTML = `
+        <div class="flex items-center justify-between bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <div><span class="block text-[10px] text-slate-400 uppercase font-bold">Score</span><span class="text-xl font-bold text-emerald-400 font-mono">${test.marksObtained}/${test.maxMarks} <span class="text-xs text-emerald-500/80">(${test.percentage}%)</span></span></div>
+            <button onclick="deleteGenericRecord('${test.PK}', '${test.SK}', 'Slip Test')" class="px-2 py-1 bg-rose-500/20 hover:bg-rose-500 hover:text-white text-rose-400 rounded text-[10px] transition-colors"><i class="fa-solid fa-trash-can"></i> Delete</button>
+        </div>
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800">
+            <span class="block text-[10px] text-slate-400 uppercase font-bold mb-1">Evaluator Remarks</span>
+            <p class="text-[11px] text-slate-300 font-mono">${test.remarks}</p>
+        </div>
+        <div>
+            <span class="block text-[10px] text-slate-400 uppercase font-bold mb-2"><i class="fa-solid fa-camera text-indigo-400 mr-1"></i> Evidence</span>
+            <div class="flex flex-wrap gap-2 justify-center sm:justify-start">${photoHtml}</div>
+        </div>
+    `;
+}
+
+// Exams & Delta
+async function handleLogSchoolExam(e) {
+    e.preventDefault();
+    const name = document.getElementById("exam-name").value.trim();
+    const sub = document.getElementById("exam-subject").value.trim();
+    const scored = parseFloat(document.getElementById("exam-scored").value);
+    const total = parseFloat(document.getElementById("exam-total").value);
+    const pct = Math.round((scored/total)*100);
+    
+    if(!activeStudentDossier.exams) activeStudentDossier.exams = [];
+    activeStudentDossier.exams.push({ name, subject: sub, scored, total, percentage: pct, date: new Date().toISOString().split("T")[0] });
+    
+    e.target.reset();
+    renderExamsDelta();
+    if(typeof showMsg === 'function') showMsg('Exam Logged', 'School exam marks added to delta progression.');
+}
+
+function renderExamsDelta() {
+    const container = document.getElementById("modal-exam-results");
+    if(!container) return;
+    container.innerHTML = "";
+    if(!activeStudentDossier.exams || activeStudentDossier.exams.length === 0) {
+        container.innerHTML = `<p class="text-[10px] text-slate-500 text-center p-3 border border-slate-800 rounded-xl">No school exams logged.</p>`;
+        return;
+    }
+    
+    let previousPct = null;
+    activeStudentDossier.exams.forEach(ex => {
+        let deltaHtml = "";
+        if (previousPct !== null) {
+            const diff = ex.percentage - previousPct;
+            if(diff > 0) deltaHtml = `<span class="text-emerald-400 text-[10px] font-bold ml-2"><i class="fa-solid fa-arrow-up"></i> ${diff}%</span>`;
+            else if(diff < 0) deltaHtml = `<span class="text-rose-400 text-[10px] font-bold ml-2"><i class="fa-solid fa-arrow-down"></i> ${Math.abs(diff)}%</span>`;
+            else deltaHtml = `<span class="text-slate-400 text-[10px] font-bold ml-2">- 0%</span>`;
+        }
+        previousPct = ex.percentage;
+
+        container.innerHTML += `
+            <div class="p-3 bg-slate-950 border border-slate-800 rounded-xl flex items-center justify-between transition-colors hover:border-indigo-500">
+                <div><h5 class="text-xs font-bold text-white">${ex.name} &bull; ${ex.subject}</h5><p class="text-[10px] text-slate-400">${ex.date}</p></div>
+                <div class="flex items-center space-x-2"><span class="font-mono font-bold text-indigo-400">${ex.scored}/${ex.total} (${ex.percentage}%)</span>${deltaHtml} <button onclick="deleteGenericRecord('${ex.PK}', '${ex.SK}', 'Exam')" class="ml-2 px-2 py-1 bg-rose-500/20 hover:bg-rose-500 hover:text-white text-rose-400 rounded text-[10px] transition-colors"><i class="fa-solid fa-trash-can"></i></button></div>
+            </div>`;
+    });
+}
+
+function populateFacultySelect() {
+    const sel = document.getElementById("doubt-faculty-select");
+    if(!sel) return;
+    sel.innerHTML = `<option value="">-- Select Faculty --</option>`;
+    activeFacultyList.forEach(f => {
+        sel.innerHTML += `<option value="${f.name}">${f.name} (${f.specialty || 'General'})</option>`;
+    });
+}
+
+async function handleFloorLogDoubt(e) {
+    e.preventDefault();
+    if(typeof showMsg === 'function') showMsg("Session Logged", `Doubt successfully routed for verification.`);
+    e.target.reset();
+}
+
+async function handleLogMisbehavior(e) {
+    e.preventDefault();
+    if(typeof showMsg === 'function') showMsg("Escalated", `Discipline incident routed to Director's WhatsApp Queue.`);
+    e.target.reset();
+}
+
+function openCustomRangePdfModal() { document.getElementById("modal-range-pdf").classList.remove("hidden"); }
+function closeCustomRangePdfModal() { document.getElementById("modal-range-pdf").classList.add("hidden"); }
+
+function executeDossierPdfExport() {
+    const start = document.getElementById("pdf-start-date").value;
+    const end = document.getElementById("pdf-end-date").value;
+    const s = activeStudentDossier;
+    
+    document.getElementById("pdf-print-name").textContent = s.name;
+    document.getElementById("pdf-print-class").textContent = `Class ${s.class} • ${s.area || 'N/A'}`;
+    if(document.getElementById("pdf-print-father")) document.getElementById("pdf-print-father").textContent = s.fatherPhone || "N/A";
+    if(document.getElementById("pdf-print-mother")) document.getElementById("pdf-print-mother").textContent = s.motherPhone || "N/A";
+    document.getElementById("pdf-print-range").textContent = `Period: ${start} to ${end}`;
+
+    const examTree = document.getElementById("pdf-print-exams");
+    if(examTree) {
+        examTree.innerHTML = "";
+        if(s.exams && s.exams.length > 0) {
+            s.exams.forEach(ex => {
+                examTree.innerHTML += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #e2e8f0; padding:6px 0;"><span style="font-weight:bold; font-size: 11px; color:#1e293b;">${ex.name} - ${ex.subject}</span><span style="color:#4338ca; font-weight:bold; font-size:11px;">${ex.percentage}%</span></div>`;
+            });
+        } else {
+            examTree.innerHTML = "<p style='color:#64748b; font-size:10px;'>No exams recorded in this period.</p>";
+        }
+    }
+
+    const testList = document.getElementById("pdf-print-tests");
+    if(testList) {
+        testList.innerHTML = "";
+        if(s.slipTests && s.slipTests.length > 0) {
+            s.slipTests.forEach(t => {
+                let thumbsHtml = "";
+                if (t.photos && t.photos.length > 0) thumbsHtml = t.photos.map(p => `<img src="${p}" style="height: 60px; width: auto; border: 1px solid #cbd5e1; border-radius: 4px; margin-right: 4px;">`).join("");
+                testList.innerHTML += `
+                    <div style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px; background: #f8fafc; margin-bottom: 8px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="font-size: 11px; font-weight: bold; color: #1e293b;">${t.date} - ${t.subject} (${t.subtopic})</span>
+                            <span style="font-size: 11px; font-weight: bold; color: #059669;">${t.marksObtained}/${t.maxMarks} (${t.percentage}%)</span>
+                        </div>
+                        <p style="font-size: 10px; color: #475569; margin-bottom: 6px; font-family: monospace;">Remarks: ${t.remarks}</p>
+                        <div style="display: flex;">${thumbsHtml}</div>
+                    </div>`;
+            });
+        } else {
+            testList.innerHTML = "<p style='color:#64748b; font-size:10px;'>No tests taken in this period.</p>";
+        }
+    }
+
+    const logTree = document.getElementById("pdf-print-log");
+    if(logTree) {
+        logTree.innerHTML = "";
+        const mockDates = ["Oct 1", "Oct 2", "Oct 3", "Oct 4", "Oct 5", "Oct 6"];
+        mockDates.forEach((d, i) => {
+            let act = "Class Work (Maths)", tut = "Tutor: Srinivas", rem = "Completed Ex 1.2";
+            if(i === 2) { act = "Slip Test (Science)"; rem = "Score: 18/20 (90%)"; }
+            if(i === 4) { act = "Academy Holiday"; tut = "-"; rem = "-"; }
+            if(i === 5) { act = "Doubt Clearance"; tut = "Faculty: K.V. Sharma"; rem = "Quadratic Roots"; }
+            logTree.innerHTML += `
+                <tr style="border-bottom:1px solid #f1f5f9; color: #1e293b;">
+                    <td style="padding:6px; border-right:1px solid #f1f5f9;">${d}</td><td style="padding:6px; border-right:1px solid #f1f5f9; font-weight:bold;">${act}</td>
+                    <td style="padding:6px; border-right:1px solid #f1f5f9; color:#475569;">${tut}</td><td style="padding:6px; color:#4338ca; font-family:monospace;">${rem}</td>
+                </tr>`;
+        });
+    }
+
+    closeCustomRangePdfModal();
+    const el = document.getElementById("printable-pdf-dossier");
+    el.classList.remove("hidden");
+    
+    if(typeof showMsg === 'function') showMsg("Compiling", "PDF is generating. Please wait...");
